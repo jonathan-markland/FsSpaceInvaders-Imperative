@@ -1,5 +1,6 @@
 ﻿module InputEventData
 
+[<Struct>]
 type InputEventData =
     {
         /// The LEFT button is repeating

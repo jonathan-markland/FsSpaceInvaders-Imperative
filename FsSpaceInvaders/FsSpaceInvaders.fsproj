@@ -47,9 +47,14 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="Algorithm.fs" />
     <Compile Include="InputEventData.fs" />
     <Compile Include="Mechanics.fs" />
     <Compile Include="Geometry.fs" />
+    <Compile Include="Dimensions.fs" />
+    <Compile Include="Scoring.fs" />
+    <Compile Include="Rates.fs" />
+    <Compile Include="ScreenLayout.fs" />
     <Compile Include="GamePlayStateTypes.fs" />
     <Compile Include="Rules.fs" />
     <Compile Include="NextFrameStateCalculator.fs" />
