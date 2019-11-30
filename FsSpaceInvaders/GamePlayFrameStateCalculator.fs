@@ -1,4 +1,4 @@
-﻿module NextFrameStateCalculator
+﻿module GamePlayFrameStateCalculator
 
 open Algorithm
 open InputEventData

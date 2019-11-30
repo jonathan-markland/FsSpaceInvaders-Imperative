@@ -5,15 +5,15 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>1b3e5421-be57-4543-b578-afb326d3c2d7</ProjectGuid>
+    <ProjectGuid>b89ad20f-b2ba-4bee-8eac-fc93c91ec7ba</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>FsSpaceInvaders</RootNamespace>
-    <AssemblyName>FsSpaceInvaders</AssemblyName>
+    <RootNamespace>FsSpaceInvadersSDL2CS</RootNamespace>
+    <AssemblyName>FsSpaceInvadersSDL2CS</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <UseStandardResourceNames>true</UseStandardResourceNames>
     <WarningsAsErrors>3239;$(WarningsAsErrors)</WarningsAsErrors>
-    <Name>FsSpaceInvaders</Name>
+    <Name>FsSpaceInvadersSDL2CS</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -47,26 +47,33 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Algorithm.fs" />
-    <Compile Include="InputEventData.fs" />
-    <Compile Include="Mechanics.fs" />
-    <Compile Include="Geometry.fs" />
-    <Compile Include="Dimensions.fs" />
-    <Compile Include="Scoring.fs" />
-    <Compile Include="Rates.fs" />
-    <Compile Include="ScreenLayout.fs" />
-    <Compile Include="GamePlayStateTypes.fs" />
-    <Compile Include="Rules.fs" />
-    <Compile Include="GamePlayFrameStateCalculator.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
     <Content Include="packages.config" />
+    <None Include="SDL2.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Content Include="BlueInvader.bmp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Bullet.bmp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="RedInvader.bmp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Ship.bmp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">
       <HintPath>..\packages\FSharp.Core.4.7.0\lib\net45\FSharp.Core.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
+    <Reference Include="SDL2-CS">
+      <HintPath>..\..\..\..\Documents\Work\SDL2-CS\bin\Debug\SDL2-CS.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
