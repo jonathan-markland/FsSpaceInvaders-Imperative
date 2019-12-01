@@ -5,11 +5,52 @@ open System.IO
 // Learn more about F# at https://fsharp.org
 // See the 'F# Tutorial' project for more help.
 
+[<Struct>]
 type Window =
     {
         WindowHandle: nativeint
     }
 
+[<Struct>]
+type Surface =
+    {
+        SurfaceHandle: nativeint
+    }
+
+let UpdateWindowSurface {WindowHandle=h} =
+    SDL.SDL_UpdateWindowSurface h |> ignore
+
+let WithNewMainWindowDo windowTitleString windowWidth windowHeight operation =
+    
+    let window = 
+        SDL.SDL_CreateWindow(
+            windowTitleString, 
+            100, 100, 
+            windowWidth, windowHeight, 
+            SDL.SDL_WindowFlags.SDL_WINDOW_SHOWN)
+
+    if window = nativeint 0 then
+        Error (sprintf "Window could not be created! SDL_Error: %s\n" (SDL.SDL_GetError ()))
+    else
+        try
+            let operationResult = operation {WindowHandle = window}
+            SDL.SDL_DestroyWindow(window)
+            Ok (operationResult)
+        with e ->
+            Error (e.Message)
+
+let WithWindowSurfaceDo operation {WindowHandle=wh} =
+
+    let windowSurface = SDL.SDL_GetWindowSurface(wh)
+
+    if windowSurface = 0n then
+        Error (sprintf "Window surface could not be obtained! SDL_Error: %s\n" (SDL.SDL_GetError ()))
+    else
+        Ok (operation {SurfaceHandle = windowSurface})
+
+
+
+[<Struct>]
 type BMPImage =
     {
         BMPHandle: nativeint
@@ -68,7 +109,7 @@ let LoadSpaceInvadersImages rootPath =
         Bullet      = fromFile "Bullet"
     }
 
-let DrawImage screenSurface (image:BMPSourceImage) left top =
+let DrawImage {SurfaceHandle=screenSurface} (image:BMPSourceImage) left top =
     let mutable dstRect = ToSdlRect left top image.SourceRect.w image.SourceRect.h
     let mutable srcRect = image.SourceRect
     SDL.SDL_BlitSurface (image.ImageHandle.BMPHandle, &srcRect, screenSurface, &dstRect) |> ignore
@@ -80,27 +121,13 @@ let main argv =
 
     let imageSet = LoadSpaceInvadersImages ""
 
-    let window = SDL.SDL_CreateWindow("Space Invaders", 100, 100, 640, 480, SDL.SDL_WindowFlags.SDL_WINDOW_SHOWN)
+    let result = WithNewMainWindowDo "Space Invaders" 640 480 (fun mainWindow ->
 
-    if window = nativeint 0 then
-
-        printf "Window could not be created! SDL_Error: %s\n" (SDL.SDL_GetError ())
-        1
-
-    else
-
-        let gScreenSurface = SDL.SDL_GetWindowSurface window
-
-        if gScreenSurface = 0n then
-
-            printf "Window surface could not be obtained! SDL_Error: %s\n" (SDL.SDL_GetError ())
-            1
-
-        else
+        mainWindow |> WithWindowSurfaceDo (fun mainSurface ->
 
             let mutable quit = false
             while quit = false do
-            
+
                 let mutable e = new SDL.SDL_Event ()
 
                 while (SDL.SDL_WaitEvent (&e)) <> 0 && not quit do   // SDL_PollEvent
@@ -113,80 +140,19 @@ let main argv =
                     else if msg = SDL.SDL_EventType.SDL_MOUSEBUTTONDOWN then 
                         quit <- true
 
-                    DrawImage gScreenSurface imageSet.Ship 100 100
-                    DrawImage gScreenSurface imageSet.BlueInvader 200 100
+                    DrawImage mainSurface imageSet.Ship 100 100
+                    DrawImage mainSurface imageSet.BlueInvader 170 100
+                    DrawImage mainSurface imageSet.BlueInvader 200 100
 
-                    SDL.SDL_UpdateWindowSurface window |> ignore
+                    UpdateWindowSurface mainWindow
+        )
+    )
 
-            SDL.SDL_DestroyWindow window
+    match result with
+        | Error(message) ->
+            printfn "%s" message
+            1
+
+        | Ok(_) ->
             0
 
-(*
-	{
-		//Get window surface
-		screenSurface = SDL_GetWindowSurface(window);
-
-		//Main loop flag
-		bool quit = false;
-
-		//While application is running
-		while (!quit)
-		{
-			//Event handler
-			SDL_Event e;
-
-			//Handle events on queue
-			while (SDL_WaitEvent(&e) != 0)   // SDL_PollEvent
-			{
-				//User requests quit
-				if (e.type == SDL_QUIT)
-				{
-					quit = true;
-					break;
-				}
-				else if (e.type == SDL_KEYDOWN)
-				{
-					MapHostKeyEventToAction(e.key.keysym.scancode, GetKeyPressAndMask, GetKeyPressOrMask, ReleaseMouseFromWindowIfEscape, KeyTranslationTableIndexedBySdlCode);
-					break;
-				}
-				else if (e.type == SDL_KEYUP)
-				{
-					MapHostKeyEventToAction(e.key.keysym.scancode, GetKeyReleaseAndMask, GetKeyReleaseOrMask, DoNothingWithParameter<SDL_Scancode>, KeyTranslationTableIndexedBySdlCode);
-					break;
-				}
-				else if (e.type == SDL_MOUSEBUTTONDOWN)
-				{
-					MapHostMouseButtonEventToAction(e.button.button, GetKeyPressAndMask, GetKeyPressOrMask, TieMouseToWindow, RemapSdlButtonEnumToBitMask);
-					break;
-				}
-				else if (e.type == SDL_MOUSEBUTTONUP)
-				{
-					MapHostMouseButtonEventToAction(e.button.button, GetKeyReleaseAndMask, GetKeyReleaseOrMask, EmptyFunction, RemapSdlButtonEnumToBitMask);
-					break;
-				}
-				else if (e.type == SDL_MOUSEMOTION)
-				{
-					MapHostMouseMotionEventToAction(e.motion.xrel, e.motion.yrel);
-					break;
-				}
-
-				DrawSomething(screenSurface);
-
-				//Update the surface
-				SDL_UpdateWindowSurface(window);
-
-				//Wait two seconds
-				// SDL_Delay(200);
-			}
-		}
-	}
-
-	//Destroy window
-	SDL_DestroyWindow(window);
-
-	//Quit SDL subsystems
-	SDL_Quit();
-
-    printfn "%A" argv
-    0 // return an integer exit code
-*)
