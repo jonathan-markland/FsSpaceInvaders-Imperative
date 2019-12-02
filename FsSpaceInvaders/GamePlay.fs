@@ -225,9 +225,11 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
     ConsiderShotMothership ()
     MoveInvaders ()
     MoveMotherships ()
-    // TODO:  Drop bombs
+    // TODO:  Release bombs
     // TODO:  Consider bombed ship or collided ship
-    // TODO:  Move bombs / terminate
+    // TODO:  Move bombs and terminate
+    // TODO:  We have no explosions!
+    // TODO:  Scoring.
 
     if NoInvadersLeft () then 
         PlayerWon
@@ -299,7 +301,7 @@ let RenderGamePlay renderer (gameWorld:GameWorld) =
                     int bullet.BulletExtents.LeftW,
                     int bullet.BulletExtents.TopW)))
 
-    // TODO: RenderTextString 
+    // TODO: We need to have rendering of the score/level/lives/hiscore!
 
 
             
