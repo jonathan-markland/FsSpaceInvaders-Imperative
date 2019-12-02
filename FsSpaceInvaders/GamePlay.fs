@@ -1,4 +1,4 @@
-﻿module GamePlayFrameStateCalculator
+﻿module GamePlay
 
 open Algorithm
 open InputEventData
@@ -23,8 +23,8 @@ let NewGameWorld hiScore (timeNow:TickCount) : GameWorld =
 
         let InitialPositionCentreForInvader x y =
             { 
-                xw = x * invaderHorizSpan + invaderLeftSide
-                yw = InvadersTopY + y * (InvaderHeight + InvaderVSpacing) 
+                xw = (x-1) * invaderHorizSpacing + invaderLeftSide
+                yw = InvadersTopY + (y-1) * (InvaderHeight + InvaderVSpacing) 
             }
 
         {
@@ -113,7 +113,7 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
             match world.Ship.WeaponReloadStartTimeOpt,timeNow with
                 | Some(TickCount(startTime)),TickCount(timeNow) -> 
-                    if (startTime - timeNow) >= TimeForReloadShipWeapon then
+                    if (timeNow - startTime) >= TimeForReloadShipWeapon then
                         world.Ship.WeaponReloadStartTimeOpt <- None
                 | None,_ -> ()
 
@@ -133,7 +133,7 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
             b.BulletExtents <- b.BulletExtents |> ShuntedBy 0<wu> -1<wu>
 
         let WhereBulletStillBelowTopmostPosition bullet =
-            bullet.BulletExtents.TopW < BulletEndY
+            bullet.BulletExtents.TopW > BulletEndY
 
         let bulletsStillLive = world.Bullets |> List.filter WhereBulletStillBelowTopmostPosition   // TODO: optimise for case where all are on screen still
 
@@ -236,3 +236,70 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
     else
         GameContinuing
 
+
+/// TODO: Do we pass through world-units?  And let the renderer decide mapping?  Is this wrong to cast to int?
+[<Struct>]
+type RenderActions =
+    | DrawInvader of l1:int * t1:int * dogTag:DogTag
+    | DrawShip of l2:int * t2:int
+    | DrawBullet of l3:int * t3:int
+    | DrawMothership of l4:int * t4:int
+    | ClearScreen
+    // TODO: | DrawText of l5:int * t5:int * message:string
+
+
+let BulletPositionOnTopOfShip theShip =
+
+    let shipL = theShip.ShipExtents.LeftW
+    let shipT = theShip.ShipExtents.TopW
+
+    let bleft = shipL + ((ShipWidth - BulletWidth)/2)
+    let btop  = shipT - BulletHeight
+
+    (bleft,btop)
+    
+
+let InWorldUnits (a,b) =  // TODO: Don't want to have to do this -- pass world units through the drawing interface!
+    int a , int b
+
+
+let RenderGamePlay renderer (gameWorld:GameWorld) =
+
+    renderer (ClearScreen)
+
+    gameWorld.Motherships |> List.iter 
+        (fun motherShip -> 
+            renderer (
+                DrawMothership(
+                    int motherShip.MothershipExtents.LeftW,
+                    int motherShip.MothershipExtents.TopW)))
+
+    gameWorld.Invaders |> List.iter
+        (fun invader -> 
+            renderer (
+                DrawInvader(
+                    int invader.InvaderExtents.LeftW,
+                    int invader.InvaderExtents.TopW,
+                    invader.DogTag)))
+
+    let theShip = gameWorld.Ship
+    let shipL = int theShip.ShipExtents.LeftW
+    let shipT = theShip.ShipExtents.TopW
+
+    renderer (DrawShip(shipL, int shipT))
+
+    match theShip.WeaponReloadStartTimeOpt with
+        | Some(_) -> ()
+        | None    -> renderer (DrawBullet ((BulletPositionOnTopOfShip theShip) |> InWorldUnits))
+
+    gameWorld.Bullets |> List.iter
+        (fun bullet -> 
+            renderer (
+                DrawBullet(
+                    int bullet.BulletExtents.LeftW,
+                    int bullet.BulletExtents.TopW)))
+
+    // TODO: RenderTextString 
+
+
+            

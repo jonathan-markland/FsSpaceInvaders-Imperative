@@ -28,7 +28,7 @@ let VerticalCentreOf r   = (r.TopW + r.BottomW) / 2
 let ShuntedBy dx dy r    =
     {
         LeftW    = r.LeftW   + dx
-        TopW     = r.BottomW + dy
+        TopW     = r.TopW    + dy
         RightW   = r.RightW  + dx
         BottomW  = r.BottomW + dy
     }
@@ -49,7 +49,11 @@ let ToCenteredRectangle (widthw:int<wu>) (heightw:int<wu>) {xw=xw ; yw=yw} =
     }
 
 let Intersects (r1:RectangleW) (r2:RectangleW) : bool =
-    failwith "incomplete"
+    if r1.LeftW >= r2.RightW then false
+    else if r1.RightW <= r2.LeftW then false
+    else if r1.TopW >= r2.BottomW then false
+    else if r1.BottomW <= r2.TopW then false
+    else true
 
 let HasListMemberThatIntersectsWith areaOfInstance getAreaOfListItem someList =
     someList |> List.tryFind (fun listItem -> areaOfInstance |> Intersects (listItem |> getAreaOfListItem)) |> Option.isSome

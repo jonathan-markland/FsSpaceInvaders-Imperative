@@ -57,7 +57,7 @@
     <Compile Include="ScreenLayout.fs" />
     <Compile Include="GamePlayStateTypes.fs" />
     <Compile Include="Rules.fs" />
-    <Compile Include="GamePlayFrameStateCalculator.fs" />
+    <Compile Include="GamePlay.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
     <Content Include="packages.config" />

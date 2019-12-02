@@ -2,6 +2,7 @@
 
 open Geometry
 open Mechanics
+open Dimensions
 
 
 type GamePlayStats =
@@ -84,6 +85,11 @@ type Bullet =
     }
 
 let AreaOfBullet b = b.BulletExtents
+
+let NewBulletAt (x,y) =
+    { 
+        BulletExtents = { LeftW=x ; TopW=y ; RightW=x+BulletWidth ; BottomW=y+BulletHeight }
+    }
 
 
 /// The Game world state during gameplay.

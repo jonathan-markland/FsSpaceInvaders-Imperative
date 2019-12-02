@@ -1,91 +1,12 @@
-﻿
-open SDL2
+﻿open SDL2
 open System.IO
+open SDLCover
+open GamePlay
+open GamePlayStateTypes
+open Rules
+open Mechanics
+open InputEventData
 
-// Learn more about F# at https://fsharp.org
-// See the 'F# Tutorial' project for more help.
-
-[<Struct>]
-type Window =
-    {
-        WindowHandle: nativeint
-    }
-
-[<Struct>]
-type Surface =
-    {
-        SurfaceHandle: nativeint
-    }
-
-let UpdateWindowSurface {WindowHandle=h} =
-    SDL.SDL_UpdateWindowSurface h |> ignore
-
-let WithNewMainWindowDo windowTitleString windowWidth windowHeight operation =
-    
-    let window = 
-        SDL.SDL_CreateWindow(
-            windowTitleString, 
-            100, 100, 
-            windowWidth, windowHeight, 
-            SDL.SDL_WindowFlags.SDL_WINDOW_SHOWN)
-
-    if window = nativeint 0 then
-        Error (sprintf "Window could not be created! SDL_Error: %s\n" (SDL.SDL_GetError ()))
-    else
-        try
-            let operationResult = operation {WindowHandle = window}
-            SDL.SDL_DestroyWindow(window)
-            Ok (operationResult)
-        with e ->
-            Error (e.Message)
-
-let WithWindowSurfaceDo operation {WindowHandle=wh} =
-
-    let windowSurface = SDL.SDL_GetWindowSurface(wh)
-
-    if windowSurface = 0n then
-        Error (sprintf "Window surface could not be obtained! SDL_Error: %s\n" (SDL.SDL_GetError ()))
-    else
-        Ok (operation {SurfaceHandle = windowSurface})
-
-
-
-[<Struct>]
-type BMPImage =
-    {
-        BMPHandle: nativeint
-    }
-
-let LoadBMP filePath =
-    let handle = SDL.SDL_LoadBMP(filePath)
-    if handle = nativeint 0 then
-        None
-    else
-        Some({ BMPHandle = handle })
-
-type BMPSourceImage =
-    {
-        ImageHandle: BMPImage
-        SourceRect:  SDL.SDL_Rect
-    }
-
-let ToSdlRect x y w h =
-    let mutable r = SDL.SDL_Rect()
-    r.x <- x
-    r.y <- y
-    r.w <- w
-    r.h <- h
-    r
-
-let WithDimensions {BMPHandle=surface} =
-
-    let t = typeof<SDL.SDL_Surface>
-    let sur = (System.Runtime.InteropServices.Marshal.PtrToStructure(surface, t)) :?> SDL.SDL_Surface
-
-    {
-        ImageHandle = { BMPHandle=surface }
-        SourceRect  = ToSdlRect 0 0 sur.w sur.h
-    }
 
 type SpaceInvadersBMPs =
     {
@@ -93,12 +14,13 @@ type SpaceInvadersBMPs =
         RedInvader:  BMPSourceImage
         BlueInvader: BMPSourceImage
         Bullet:      BMPSourceImage
+        Mothership:  BMPSourceImage
     }
 
 let LoadSpaceInvadersImages rootPath =
 
     let fromFile name = 
-        let fullPath = Path.Combine (rootPath, name) + ".bmp"
+        let fullPath = Path.Combine(Path.Combine(rootPath, "Images"), name) + ".bmp"
         match LoadBMP fullPath with
             | Some(file) -> file |> WithDimensions
             | None       -> failwith (sprintf "Space invaders could not start because file '%s' is missing." fullPath)
@@ -107,32 +29,98 @@ let LoadSpaceInvadersImages rootPath =
         RedInvader  = fromFile "RedInvader"
         BlueInvader = fromFile "BlueInvader"
         Bullet      = fromFile "Bullet"
+        Mothership  = fromFile "Mothership"
     }
 
-let DrawImage {SurfaceHandle=screenSurface} (image:BMPSourceImage) left top =
-    let mutable dstRect = ToSdlRect left top image.SourceRect.w image.SourceRect.h
-    let mutable srcRect = image.SourceRect
-    SDL.SDL_BlitSurface (image.ImageHandle.BMPHandle, &srcRect, screenSurface, &dstRect) |> ignore
+let RenderToSdlSurface imageSet targetSurface renderAction =
 
+    match renderAction with
+        
+        | DrawBullet(left,top) ->
+            DrawImage targetSurface imageSet.Bullet left top
+
+        | DrawInvader(left,top,dogTag) ->
+            let invaderBmp =
+                match (InvaderColourFromDogTag dogTag) with
+                    | RedInvader  -> imageSet.RedInvader
+                    | BlueInvader -> imageSet.BlueInvader
+            DrawImage targetSurface invaderBmp left top
+
+        | DrawMothership(left,top) ->
+            DrawImage targetSurface imageSet.Mothership left top
+
+        | DrawShip(left,top) ->
+            DrawImage targetSurface imageSet.Ship left top
+
+        | ClearScreen ->
+            DrawFilledRectangle targetSurface 0 0 256 256 0u
+            
+
+
+
+let TimerCallback (interval:uint32) (param:nativeint) : uint32 =
+
+    // let mutable event = new SDL.SDL_Event()
+    // let mutable userevent = new SDL.SDL_UserEvent()
+    // 
+    // userevent.``type`` <- uint32 SDL.SDL_EventType.SDL_USEREVENT
+    // userevent.code <- 0
+    // userevent.data1 <- 0n
+    // userevent.data2 <- 0n
+    // 
+    // event.``type`` <- SDL.SDL_EventType.SDL_USEREVENT
+    // event.user <- userevent
+    // 
+    // SDL.SDL_PushEvent(&event) |> ignore
+    // 0u
+
+    let mutable event = new SDL.SDL_Event()
+
+    event.``type`` <- SDL.SDL_EventType.SDL_USEREVENT
+    event.user.code <- 0
+    event.user.data1 <- 0n
+    event.user.data2 <- 0n
+
+    SDL.SDL_PushEvent(&event) |> ignore
+    1u  // We can return 0u to cancel the timer here, or non-zero to keep it going.
 
 
 [<EntryPoint>]
 let main argv =
 
+    let initResult = SDL.SDL_Init(SDL.SDL_INIT_TIMER)
+    if initResult <> 0 then
+        failwith "Failed to initialise SDL."
+
     let imageSet = LoadSpaceInvadersImages ""
 
-    let result = WithNewMainWindowDo "Space Invaders" 640 480 (fun mainWindow ->
+    let hiScore = 1000 // hack
+    let timeNowTickCount = TickCount(0u) // hack
+    let gamePlayState = NewGameWorld hiScore timeNowTickCount
+
+    let result = WithNewMainWindowDo "Space Invaders" 256 256 (fun mainWindow ->
 
         mainWindow |> WithWindowSurfaceDo (fun mainSurface ->
+
+            let timerID = SDL.SDL_AddTimer(15u,new SDL.SDL_TimerCallback(TimerCallback),0n)
+            if timerID = 0 then
+                failwith "Failed to install the gameplay timer."
+
+            let mutable leftHeld = false
+            let mutable rightHeld = false
+            let mutable tickCount = 0u
+
+            let mutable fireJustPressed = false  // until discovered otherwise
+            let mutable fireWaitingRelease = false
 
             let mutable quit = false
             while quit = false do
 
-                let mutable e = new SDL.SDL_Event ()
+                let mutable event = new SDL.SDL_Event ()
 
-                while (SDL.SDL_WaitEvent (&e)) <> 0 && not quit do   // SDL_PollEvent
+                while (SDL.SDL_WaitEvent (&event)) <> 0 && not quit do   // SDL_PollEvent
 
-                    let msg = e.``type``
+                    let msg = event.``type``
 
                     if msg = SDL.SDL_EventType.SDL_QUIT then 
                         quit <- true
@@ -140,12 +128,35 @@ let main argv =
                     else if msg = SDL.SDL_EventType.SDL_MOUSEBUTTONDOWN then 
                         quit <- true
 
-                    DrawImage mainSurface imageSet.Ship 100 100
-                    DrawImage mainSurface imageSet.BlueInvader 170 100
-                    DrawImage mainSurface imageSet.BlueInvader 200 100
+                    else if msg = SDL.SDL_EventType.SDL_KEYDOWN then
+                        match event.key.keysym.scancode with
+                            | SDL.SDL_Scancode.SDL_SCANCODE_LEFT  -> leftHeld <- true
+                            | SDL.SDL_Scancode.SDL_SCANCODE_RIGHT -> rightHeld <- true
+                            | SDL.SDL_Scancode.SDL_SCANCODE_Z     -> 
+                                if fireWaitingRelease 
+                                then () 
+                                else 
+                                    fireJustPressed <- true
+                                    fireWaitingRelease <- true
+                            | _ -> ()
 
-                    UpdateWindowSurface mainWindow
-        )
+                    else if msg = SDL.SDL_EventType.SDL_KEYUP then
+                        match event.key.keysym.scancode with
+                            | SDL.SDL_Scancode.SDL_SCANCODE_LEFT  -> leftHeld <- false
+                            | SDL.SDL_Scancode.SDL_SCANCODE_RIGHT -> rightHeld <- false
+                            | SDL.SDL_Scancode.SDL_SCANCODE_Z     -> fireWaitingRelease <- false
+                            | _ -> ()
+
+                    else if msg = SDL.SDL_EventType.SDL_USEREVENT then
+                        // ~ This is the AddTimer event handler 
+                        tickCount <- tickCount + 1u
+                        // gamePlayState |> ApplyInputsToGamePlayState  tickCount
+                        let inputEventData = { LeftHeld=leftHeld ; RightHeld=rightHeld ; FireJustPressed=fireJustPressed }
+                        CalculateNextFrameState gamePlayState inputEventData (TickCount(tickCount)) |> ignore // TODO: sort out return code handling
+                        gamePlayState |> RenderGamePlay (RenderToSdlSurface imageSet mainSurface)
+                        UpdateWindowSurface mainWindow
+                        fireJustPressed <- false
+        ) 
     )
 
     match result with
