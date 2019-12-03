@@ -176,20 +176,22 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
     let MoveInvaders () =
     
         let (TickCount(ticks)) = timeNow
+        if ticks &&& 7u = 0u then
+            let ticks = ticks / 8u
 
-        let dx = if (ticks &&& 16u) = 0u then 1<wu> else -1<wu>
-        let dy = if (ticks &&& 31u) = 0u then 1<wu> else 0<wu>
+            let dx = if (ticks &&& 16u) = 0u then 1<wu> else -1<wu>
+            let dy = if (ticks &&& 31u) = 0u then 1<wu> else 0<wu>
 
-        world.Invaders |> List.iter (fun invader ->
-            let old = invader.InvaderExtents
-            invader.InvaderExtents <-
-                {
-                    LeftW     = old.LeftW   + dx
-                    TopW      = old.TopW    + dy
-                    RightW    = old.RightW  + dx
-                    BottomW   = old.BottomW + dy
-                }
-            )
+            world.Invaders |> List.iter (fun invader ->
+                let old = invader.InvaderExtents
+                invader.InvaderExtents <-
+                    {
+                        LeftW     = old.LeftW   + dx
+                        TopW      = old.TopW    + dy
+                        RightW    = old.RightW  + dx
+                        BottomW   = old.BottomW + dy
+                    }
+                )
 
     let MoveMotherships () =
 
@@ -225,8 +227,10 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
     ConsiderShotMothership ()
     MoveInvaders ()
     MoveMotherships ()
+
     // TODO:  Release bombs
     // TODO:  Consider bombed ship or collided ship
+    // TODO:  Consider if an invader has touched down on land == loss
     // TODO:  Move bombs and terminate
     // TODO:  We have no explosions!
     // TODO:  Scoring.
