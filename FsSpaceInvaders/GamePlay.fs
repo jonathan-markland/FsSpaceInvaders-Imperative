@@ -81,6 +81,8 @@ let Every (frequency:TickSpan) (elapsedTime:TickSpan) f =
     let (TickSpan(elapsed)) = elapsedTime
     if (elapsed % freq) = 0u then Some(f ()) else None
 
+let DoEvery frequency elapsedTime f =
+    Every frequency elapsedTime f |> ignore
 
 
 
@@ -205,22 +207,17 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
         let elapsedTime = timeNow --- world.GameStartTime
 
-        let newMothershipOpt =
-            Every TimeForMothershipCheck elapsedTime (fun () ->
-                let x = MothershipCentreStartX - (MothershipWidth / 2)
-                let newMothership = { MothershipExtents = { LeftW=x ; TopW=MotherShipTopY ; RightW=x+MothershipWidth ; BottomW=MotherShipTopY+MothershipHeight } }
-                newMothership
-            )
-
-        match newMothershipOpt with
-            | Some(x) -> world.Motherships <- x :: world.Motherships
-            | None -> ()
+        DoEvery TimeForMothershipCheck elapsedTime (fun () ->
+            let x = MothershipCentreStartX - (MothershipWidth / 2)
+            let newMothership = { MothershipExtents = { LeftW=x ; TopW=MotherShipTopY ; RightW=x+MothershipWidth ; BottomW=MotherShipTopY+MothershipHeight } }
+            world.Motherships <- newMothership :: world.Motherships
+        )
 
     let MoveMotherships () =
 
         let elapsedTime = timeNow --- world.GameStartTime
 
-        Every TimeForMothershipUpdate elapsedTime (fun () ->
+        DoEvery TimeForMothershipUpdate elapsedTime (fun () ->
 
             let dx = 1<wu>
 
@@ -237,7 +234,6 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
                     world.Motherships |> List.filter (fun mothership -> not (mothership |> atFinishPosition))
                 world.Motherships <- survivingMotherships
         )
-            |> ignore
 
     let NoInvadersLeft () =
     
