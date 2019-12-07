@@ -4,8 +4,8 @@ open Dimensions
 
 // Horizontally
 
-let MothershipCentreStartX   = MothershipWidth
-let MothershipCentreEndX     = ScreenWidth - MothershipCentreStartX
+let MothershipCentreStartX   = -MothershipWidth
+let MothershipCentreEndX     = ScreenWidth + MothershipWidth
 
 let ShipCentreLeftmostX      = ShipWidth
 let ShipCentreRightmostX     = ScreenWidth - ShipCentreLeftmostX

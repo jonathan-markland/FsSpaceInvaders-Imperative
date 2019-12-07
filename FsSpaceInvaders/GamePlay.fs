@@ -76,6 +76,14 @@ type FrameResult = GameContinuing | PlayerWon | PlayerLost
 
 
 
+let Every (frequency:TickSpan) (elapsedTime:TickSpan) f =
+    let (TickSpan(freq)) = frequency
+    let (TickSpan(elapsed)) = elapsedTime
+    if (elapsed % freq) = 0u then Some(f ()) else None
+
+
+
+
 let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:TickCount) =
 
     let IncreaseScoreBy n =
@@ -193,22 +201,42 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
                     }
                 )
 
-    let MoveMotherships () =
+    let ConsiderIntroducingMothership () =
 
-        let dx = 1<wu>
+        let elapsedTime = timeNow --- world.GameStartTime
 
-        world.Motherships |> List.iter (fun mothership ->
-            let old = mothership.MothershipExtents
-            mothership.MothershipExtents <- { old with LeftW = old.LeftW + dx ; RightW = old.RightW + dx }
+        let newMothershipOpt =
+            Every TimeForMothershipCheck elapsedTime (fun () ->
+                let x = MothershipCentreStartX - (MothershipWidth / 2)
+                let newMothership = { MothershipExtents = { LeftW=x ; TopW=MotherShipTopY ; RightW=x+MothershipWidth ; BottomW=MotherShipTopY+MothershipHeight } }
+                newMothership
             )
 
-        let atFinishPosition mothership =
-            mothership.MothershipExtents.RightW = (MothershipCentreEndX + MothershipWidth / 2)
+        match newMothershipOpt with
+            | Some(x) -> world.Motherships <- x :: world.Motherships
+            | None -> ()
 
-        if world.Motherships |> List.exists atFinishPosition then
-            let survivingMotherships =
-                world.Motherships |> List.filter (fun mothership -> not (mothership |> atFinishPosition))
-            world.Motherships <- survivingMotherships
+    let MoveMotherships () =
+
+        let elapsedTime = timeNow --- world.GameStartTime
+
+        Every TimeForMothershipUpdate elapsedTime (fun () ->
+
+            let dx = 1<wu>
+
+            world.Motherships |> List.iter (fun mothership ->
+                let old = mothership.MothershipExtents
+                mothership.MothershipExtents <- { old with LeftW = old.LeftW + dx ; RightW = old.RightW + dx }
+                )
+
+            let atFinishPosition mothership =
+                mothership.MothershipExtents.RightW = (MothershipCentreEndX + MothershipWidth / 2)
+
+            if world.Motherships |> List.exists atFinishPosition then
+                let survivingMotherships =
+                    world.Motherships |> List.filter (fun mothership -> not (mothership |> atFinishPosition))
+                world.Motherships <- survivingMotherships
+        )
 
     let NoInvadersLeft () =
     
@@ -227,6 +255,7 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
     ConsiderShotMothership ()
     MoveInvaders ()
     MoveMotherships ()
+    ConsiderIntroducingMothership ()
 
     // TODO:  Release bombs
     // TODO:  Consider bombed ship or collided ship
