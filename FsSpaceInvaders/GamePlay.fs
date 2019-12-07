@@ -237,6 +237,7 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
                     world.Motherships |> List.filter (fun mothership -> not (mothership |> atFinishPosition))
                 world.Motherships <- survivingMotherships
         )
+            |> ignore
 
     let NoInvadersLeft () =
     
