@@ -60,20 +60,6 @@ let RenderToSdlSurface imageSet targetSurface renderAction =
 
 let TimerCallback (interval:uint32) (param:nativeint) : uint32 =
 
-    // let mutable event = new SDL.SDL_Event()
-    // let mutable userevent = new SDL.SDL_UserEvent()
-    // 
-    // userevent.``type`` <- uint32 SDL.SDL_EventType.SDL_USEREVENT
-    // userevent.code <- 0
-    // userevent.data1 <- 0n
-    // userevent.data2 <- 0n
-    // 
-    // event.``type`` <- SDL.SDL_EventType.SDL_USEREVENT
-    // event.user <- userevent
-    // 
-    // SDL.SDL_PushEvent(&event) |> ignore
-    // 0u
-
     let mutable event = new SDL.SDL_Event()
 
     event.``type`` <- SDL.SDL_EventType.SDL_USEREVENT
@@ -83,6 +69,7 @@ let TimerCallback (interval:uint32) (param:nativeint) : uint32 =
 
     SDL.SDL_PushEvent(&event) |> ignore
     1u  // We can return 0u to cancel the timer here, or non-zero to keep it going.
+
 
 
 [<EntryPoint>]
@@ -105,6 +92,8 @@ let main argv =
             let timerID = SDL.SDL_AddTimer(15u,new SDL.SDL_TimerCallback(TimerCallback),0n)
             if timerID = 0 then
                 failwith "Failed to install the gameplay timer."
+
+            let renderFunction = (RenderToSdlSurface imageSet mainSurface)
 
             let mutable leftHeld = false
             let mutable rightHeld = false
@@ -153,7 +142,7 @@ let main argv =
                         // gamePlayState |> ApplyInputsToGamePlayState  tickCount
                         let inputEventData = { LeftHeld=leftHeld ; RightHeld=rightHeld ; FireJustPressed=fireJustPressed }
                         CalculateNextFrameState gamePlayState inputEventData (TickCount(tickCount)) |> ignore // TODO: sort out return code handling
-                        gamePlayState |> RenderGamePlay (RenderToSdlSurface imageSet mainSurface)
+                        RenderGamePlay renderFunction gamePlayState
                         UpdateWindowSurface mainWindow
                         fireJustPressed <- false
         ) 
