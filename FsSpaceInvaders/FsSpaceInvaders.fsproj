@@ -53,7 +53,6 @@
     <Compile Include="Geometry.fs" />
     <Compile Include="Dimensions.fs" />
     <Compile Include="Scoring.fs" />
-    <Compile Include="Fonts.fs" />
     <Compile Include="Rates.fs" />
     <Compile Include="ScreenLayout.fs" />
     <Compile Include="GamePlayStateTypes.fs" />
@@ -74,6 +73,13 @@
     <Reference Include="System.ValueTuple">
       <Private>True</Private>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FsAnyGame\FsAnyGame.fsproj">
+      <Name>FsAnyGame</Name>
+      <Project>{48fc3cbb-a3ed-46b9-acdb-1b0a506014c5}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
