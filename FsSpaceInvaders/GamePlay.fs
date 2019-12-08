@@ -10,6 +10,7 @@ open ScreenLayout
 open Dimensions
 open Scoring
 open Rates
+open Fonts
 
 
 /// Create a fresh game world for a new game.
@@ -269,15 +270,20 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
         GameContinuing
 
 
-/// TODO: Do we pass through world-units?  And let the renderer decide mapping?  Is this wrong to cast to int?
+let HeadingAlignmentScore   = LeftAlign
+let HeadingAlignmentHiScore = CentreAlign
+let HeadingAlignmentLevel   = CentreAlign
+let HeadingAlignmentLives   = RightAlign
+
+
 [<Struct>]
 type RenderActions =
-    | DrawInvader of l1:int * t1:int * dogTag:DogTag
-    | DrawShip of l2:int * t2:int
-    | DrawBullet of l3:int * t3:int
-    | DrawMothership of l4:int * t4:int
+    | DrawInvader    of l1:int<wu> * t1:int<wu> * dogTag:DogTag
+    | DrawShip       of l2:int<wu> * t2:int<wu>
+    | DrawBullet     of l3:int<wu> * t3:int<wu>
+    | DrawMothership of l4:int<wu> * t4:int<wu>
     | ClearScreen
-    // TODO: | DrawText of l5:int * t5:int * message:string
+    | DrawText       of x:int<wu> * topY5:int<wu> * message:string * textAlign:TextAlignment
 
 
 let BulletPositionOnTopOfShip theShip =
@@ -291,10 +297,6 @@ let BulletPositionOnTopOfShip theShip =
     (bleft,btop)
     
 
-let InWorldUnits (a,b) =  // TODO: Don't want to have to do this -- pass world units through the drawing interface!
-    int a , int b
-
-
 let RenderGamePlay renderer (gameWorld:GameWorld) =
 
     renderer (ClearScreen)
@@ -303,35 +305,50 @@ let RenderGamePlay renderer (gameWorld:GameWorld) =
         (fun motherShip -> 
             renderer (
                 DrawMothership(
-                    int motherShip.MothershipExtents.LeftW,
-                    int motherShip.MothershipExtents.TopW)))
+                    motherShip.MothershipExtents.LeftW,
+                    motherShip.MothershipExtents.TopW)))
 
     gameWorld.Invaders |> List.iter
         (fun invader -> 
             renderer (
                 DrawInvader(
-                    int invader.InvaderExtents.LeftW,
-                    int invader.InvaderExtents.TopW,
+                    invader.InvaderExtents.LeftW,
+                    invader.InvaderExtents.TopW,
                     invader.DogTag)))
 
     let theShip = gameWorld.Ship
-    let shipL = int theShip.ShipExtents.LeftW
+    let shipL = theShip.ShipExtents.LeftW
     let shipT = theShip.ShipExtents.TopW
 
-    renderer (DrawShip(shipL, int shipT))
+    renderer (DrawShip(shipL, shipT))
 
     match theShip.WeaponReloadStartTimeOpt with
         | Some(_) -> ()
-        | None    -> renderer (DrawBullet ((BulletPositionOnTopOfShip theShip) |> InWorldUnits))
+        | None    -> renderer (DrawBullet (BulletPositionOnTopOfShip theShip))
 
     gameWorld.Bullets |> List.iter
         (fun bullet -> 
             renderer (
                 DrawBullet(
-                    int bullet.BulletExtents.LeftW,
-                    int bullet.BulletExtents.TopW)))
+                    bullet.BulletExtents.LeftW,
+                    bullet.BulletExtents.TopW)))
 
-    // TODO: We need to have rendering of the score/level/lives/hiscore!
+    let text x top message alignment =
+        renderer (DrawText (x, top, message, alignment))
+
+    let number x top (value:int) alignment =
+        let s = value.ToString()
+        renderer (DrawText (x, top, s, alignment))
+
+    text   HeadingScoreX   ScoreboardTitlesTopY "SCORE"   HeadingAlignmentScore  
+    text   HeadingHiScoreX ScoreboardTitlesTopY "HISCORE" HeadingAlignmentHiScore
+    text   HeadingLevelX   ScoreboardTitlesTopY "LEVEL"   HeadingAlignmentLevel  
+    text   HeadingLivesX   ScoreboardTitlesTopY "LIVES"   HeadingAlignmentLives  
+
+    number HeadingScoreX   ScoreboardValuesTopY gameWorld.PlayStats.Score   HeadingAlignmentScore  
+    number HeadingHiScoreX ScoreboardValuesTopY gameWorld.PlayStats.HiScore HeadingAlignmentHiScore
+    number HeadingLevelX   ScoreboardValuesTopY gameWorld.PlayStats.Level   HeadingAlignmentLevel  
+    number HeadingLivesX   ScoreboardValuesTopY gameWorld.PlayStats.Lives   HeadingAlignmentLives  
 
 
             

@@ -6,6 +6,7 @@ open GamePlayStateTypes
 open Rules
 open Mechanics
 open InputEventData
+open Geometry
 
 
 type SpaceInvadersBMPs =
@@ -15,7 +16,10 @@ type SpaceInvadersBMPs =
         BlueInvader: BMPSourceImage
         Bullet:      BMPSourceImage
         Mothership:  BMPSourceImage
+        Font:        BMPSourceImage
     }
+
+
 
 let LoadSpaceInvadersImages rootPath =
 
@@ -30,31 +34,39 @@ let LoadSpaceInvadersImages rootPath =
         BlueInvader = fromFile "BlueInvader"
         Bullet      = fromFile "Bullet"
         Mothership  = fromFile "Mothership"
+        Font        = fromFile "Font"
     }
 
-let RenderToSdlSurface imageSet targetSurface renderAction =
+
+
+let RenderToSdlSurface imageSet fontDefinition targetSurface renderAction =
+
+    /// Convert World Units <wu> to our pixels.  It happens that this is 1:1 with 256 x 256 schemes.
+    let px (n:int<wu>) = int n
 
     match renderAction with
         
         | DrawBullet(left,top) ->
-            DrawImage targetSurface imageSet.Bullet left top
+            DrawImage targetSurface imageSet.Bullet (px left) (px top)
 
         | DrawInvader(left,top,dogTag) ->
             let invaderBmp =
                 match (InvaderColourFromDogTag dogTag) with
                     | RedInvader  -> imageSet.RedInvader
                     | BlueInvader -> imageSet.BlueInvader
-            DrawImage targetSurface invaderBmp left top
+            DrawImage targetSurface invaderBmp (px left) (px top)
 
         | DrawMothership(left,top) ->
-            DrawImage targetSurface imageSet.Mothership left top
+            DrawImage targetSurface imageSet.Mothership (px left) (px top)
 
         | DrawShip(left,top) ->
-            DrawImage targetSurface imageSet.Ship left top
+            DrawImage targetSurface imageSet.Ship (px left) (px top)
 
         | ClearScreen ->
             DrawFilledRectangle targetSurface 0 0 256 256 0u
             
+        | DrawText(x,top,message,textAlign) ->
+            DrawTextString targetSurface (px x) (px top) message textAlign fontDefinition
 
 
 
@@ -72,6 +84,7 @@ let TimerCallback (interval:uint32) (param:nativeint) : uint32 =
 
 
 
+
 [<EntryPoint>]
 let main argv =
 
@@ -80,6 +93,7 @@ let main argv =
         failwith "Failed to initialise SDL."
 
     let imageSet = LoadSpaceInvadersImages ""
+    let fontDefinition = MakeFont imageSet.Font.ImageHandle
 
     let hiScore = 1000 // hack
     let timeNowTickCount = TickCount(0u) // hack
@@ -93,7 +107,7 @@ let main argv =
             if timerID = 0 then
                 failwith "Failed to install the gameplay timer."
 
-            let renderFunction = (RenderToSdlSurface imageSet mainSurface)
+            let renderFunction = (RenderToSdlSurface imageSet fontDefinition mainSurface)
 
             let mutable leftHeld = false
             let mutable rightHeld = false

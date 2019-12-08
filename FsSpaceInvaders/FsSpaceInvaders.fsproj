@@ -53,6 +53,7 @@
     <Compile Include="Geometry.fs" />
     <Compile Include="Dimensions.fs" />
     <Compile Include="Scoring.fs" />
+    <Compile Include="Fonts.fs" />
     <Compile Include="Rates.fs" />
     <Compile Include="ScreenLayout.fs" />
     <Compile Include="GamePlayStateTypes.fs" />
