@@ -45,6 +45,9 @@
     <Compile Include="AssemblyInfo.fs" />
     <Content Include="packages.config" />
     <Compile Include="Fonts.fs" />
+    <Compile Include="Mechanics.fs" />
+    <Compile Include="Geometry.fs" />
+    <Compile Include="Algorithm.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">
