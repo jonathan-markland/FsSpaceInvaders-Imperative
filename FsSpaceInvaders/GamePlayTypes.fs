@@ -47,16 +47,6 @@ let AreaOfInvader i = i.InvaderExtents
 let DogTagOfInvader i = i.DogTag
 
 
-/// Values that apply to all motherships.
-/// Can be calculated at game start, then never changes.
-type MothershipConstants =
-    {
-        /// Number of ticks to get from start to end point.
-        /// End point is the right of the screen.
-        MothershipDuration: TickCount
-    }
-
-
 /// Record to represent mothership instance, created
 /// only when the mothership instance appears.
 type Mothership =
@@ -65,16 +55,6 @@ type Mothership =
     }
 
 let AreaOfMothership m = m.MothershipExtents
-
-/// Values that apply to all bullets.
-/// Can be calculated at game start, then never changes.
-type BulletConstants =
-    {
-        /// Number of ticks to get from start to end point.
-        /// End point is the top of the screen at BulletFinishY.
-        /// Allows vertical position calculation.
-        BulletDuration: TickCount
-    }
 
 
 /// Record to represent bullet instance, created

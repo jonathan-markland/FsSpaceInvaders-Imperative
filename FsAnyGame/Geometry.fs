@@ -20,7 +20,7 @@ type RectangleW =
     {
         LeftW:int<wu> ; TopW:int<wu> ; RightW:int<wu> ; BottomW:int<wu>
     }
-
+ 
 
 let HorizontalCentreOf r = (r.LeftW + r.RightW) / 2
 let VerticalCentreOf r   = (r.TopW + r.BottomW) / 2
@@ -33,22 +33,22 @@ let ShuntedBy dx dy r    =
         BottomW  = r.BottomW + dy
     }
 
-let ToCenteredRectangle (widthw:int<wu>) (heightw:int<wu>) {xw=xw ; yw=yw} =
+let RectangleCenteredAboutPoint (width:int<wu>) (height:int<wu>) {xw=centrex ; yw=centrey} =
 
-    let dx = widthw / 2
-    let dy = heightw / 2
+    let halfwidth  = width / 2
+    let halfheight = height / 2
 
-    let left = xw - dx
-    let top  = yw - dy
+    let left = centrex - halfwidth
+    let top  = centrey - halfheight
 
     {
         LeftW   = left
         TopW    = top
-        RightW  = left + widthw
-        BottomW = top + heightw
+        RightW  = left + width
+        BottomW = top  + height
     }
 
-let Intersects (r1:RectangleW) (r2:RectangleW) : bool =
+let RectangleIntersects (r1:RectangleW) (r2:RectangleW) : bool =
     if r1.LeftW >= r2.RightW then false
     else if r1.RightW <= r2.LeftW then false
     else if r1.TopW >= r2.BottomW then false
@@ -56,7 +56,7 @@ let Intersects (r1:RectangleW) (r2:RectangleW) : bool =
     else true
 
 let HasListMemberThatIntersectsWith areaOfInstance getAreaOfListItem someList =
-    someList |> List.tryFind (fun listItem -> areaOfInstance |> Intersects (listItem |> getAreaOfListItem)) |> Option.isSome
+    someList |> List.tryFind (fun listItem -> areaOfInstance |> RectangleIntersects (listItem |> getAreaOfListItem)) |> Option.isSome
 
 let CollisionsBetween (aList:'a list) (bList:'b list) getAreaOfA getAreaOfB =
     

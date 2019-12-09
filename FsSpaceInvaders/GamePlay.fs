@@ -30,7 +30,7 @@ let NewGameWorld hiScore (timeNow:TickCount) : GameWorld =
 
         {
             DogTag = DogTag(y * InvadersPerRow + x)
-            InvaderExtents = (InitialPositionCentreForInvader x y) |> ToCenteredRectangle InvaderWidth InvaderHeight
+            InvaderExtents = (InitialPositionCentreForInvader x y) |> RectangleCenteredAboutPoint InvaderWidth InvaderHeight
         }
 
     {
@@ -74,16 +74,6 @@ let NewGameWorld hiScore (timeNow:TickCount) : GameWorld =
 
 
 type FrameResult = GameContinuing | PlayerWon | PlayerLost
-
-
-
-let Every (frequency:TickSpan) (elapsedTime:TickSpan) f =
-    let (TickSpan(freq)) = frequency
-    let (TickSpan(elapsed)) = elapsedTime
-    if (elapsed % freq) = 0u then Some(f ()) else None
-
-let DoEvery frequency elapsedTime f =
-    Every frequency elapsedTime f |> ignore
 
 
 
