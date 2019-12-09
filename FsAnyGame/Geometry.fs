@@ -29,7 +29,7 @@ let VerticalCentreOf r   = (r.TopW + r.BottomW) / 2
 
 
 
-let ShuntedBy dx dy r    =
+let RectangleShuntedBy dx dy r =
     {
         LeftW    = r.LeftW   + dx
         TopW     = r.TopW    + dy

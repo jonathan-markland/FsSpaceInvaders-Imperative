@@ -103,10 +103,10 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
     let MoveShip () =
 
         if input.LeftHeld && (HorizontalCentreOf world.Ship.ShipExtents) > ShipCentreLeftmostX then
-            world.Ship.ShipExtents <- world.Ship.ShipExtents |> ShuntedBy -1<wu> 0<wu>
+            world.Ship.ShipExtents <- world.Ship.ShipExtents |> RectangleShuntedBy -1<wu> 0<wu>
 
         if input.RightHeld && (HorizontalCentreOf world.Ship.ShipExtents) < ShipCentreRightmostX then
-            world.Ship.ShipExtents <- world.Ship.ShipExtents |> ShuntedBy 1<wu> 0<wu>
+            world.Ship.ShipExtents <- world.Ship.ShipExtents |> RectangleShuntedBy 1<wu> 0<wu>
 
     let ConsiderBulletFiring () =
 
@@ -131,7 +131,7 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
     let UpdateBullets () =
 
         let ApplyUpwardMovementToBullet b =
-            b.BulletExtents <- b.BulletExtents |> ShuntedBy 0<wu> -1<wu>
+            b.BulletExtents <- b.BulletExtents |> RectangleShuntedBy 0<wu> -1<wu>
 
         let WhereBulletStillBelowTopmostPosition bullet =
             bullet.BulletExtents.TopW > BulletEndY
