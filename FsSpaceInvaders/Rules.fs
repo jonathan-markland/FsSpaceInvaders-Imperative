@@ -1,7 +1,6 @@
 ﻿module Rules
 
-open Geometry
-open GamePlayStateTypes
+open GamePlayTypes
 
 // Hint:  Things common to drawing and hit-testing.
 

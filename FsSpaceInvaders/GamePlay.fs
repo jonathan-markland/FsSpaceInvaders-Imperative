@@ -2,7 +2,7 @@
 
 open Algorithm
 open InputEventData
-open GamePlayStateTypes
+open GamePlayTypes
 open Rules
 open Geometry
 open Mechanics

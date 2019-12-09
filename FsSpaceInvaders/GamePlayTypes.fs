@@ -1,4 +1,4 @@
-﻿module GamePlayStateTypes
+﻿module GamePlayTypes
 
 open Geometry
 open Mechanics

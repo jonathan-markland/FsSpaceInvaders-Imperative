@@ -2,7 +2,7 @@
 open System.IO
 open SDLCover
 open GamePlay
-open GamePlayStateTypes
+open GamePlayTypes
 open Rules
 open Mechanics
 open InputEventData

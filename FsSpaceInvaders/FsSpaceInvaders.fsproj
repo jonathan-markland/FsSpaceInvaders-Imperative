@@ -52,7 +52,7 @@
     <Compile Include="Scoring.fs" />
     <Compile Include="Rates.fs" />
     <Compile Include="ScreenLayout.fs" />
-    <Compile Include="GamePlayStateTypes.fs" />
+    <Compile Include="GamePlayTypes.fs" />
     <Compile Include="Rules.fs" />
     <Compile Include="GamePlay.fs" />
     <None Include="App.config" />
