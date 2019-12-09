@@ -144,7 +144,10 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
     let ConsiderShotInvaders () =
 
-        let deadBullets,deadInvaders = CollisionsBetween world.Bullets world.Invaders AreaOfBullet AreaOfInvader
+        let deadBullets,deadInvaders = 
+            CollisionsBetween 
+                (world.Bullets |> WithAreasObtainedBy AreaOfBullet)
+                (world.Invaders |> WithAreasObtainedBy AreaOfInvader)
 
         let scoreIncrease = (List.length deadInvaders) * ScoreForKillingInvader
         // TODO: explosions.
@@ -161,7 +164,10 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
         // TODO: Performance optimise:  Don't do any of this if no motherships (a common case)
 
-        let deadBullets,deadMotherships = CollisionsBetween world.Bullets world.Motherships AreaOfBullet AreaOfMothership
+        let deadBullets,deadMotherships = 
+            CollisionsBetween 
+                (world.Bullets |> WithAreasObtainedBy AreaOfBullet)
+                (world.Motherships |> WithAreasObtainedBy AreaOfMothership)
 
         let scoreIncrease = (List.length deadMotherships) * ScoreForKillingMothership
         // TODO: explosions.

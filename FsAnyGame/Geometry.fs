@@ -15,6 +15,7 @@ type PointW =
     }
 
 
+
 /// A rectangle in World-Space.
 type RectangleW =
     {
@@ -22,8 +23,11 @@ type RectangleW =
     }
  
 
+
 let HorizontalCentreOf r = (r.LeftW + r.RightW) / 2
 let VerticalCentreOf r   = (r.TopW + r.BottomW) / 2
+
+
 
 let ShuntedBy dx dy r    =
     {
@@ -32,6 +36,8 @@ let ShuntedBy dx dy r    =
         RightW   = r.RightW  + dx
         BottomW  = r.BottomW + dy
     }
+
+
 
 let RectangleCenteredAboutPoint (width:int<wu>) (height:int<wu>) {xw=centrex ; yw=centrey} =
 
@@ -48,25 +54,55 @@ let RectangleCenteredAboutPoint (width:int<wu>) (height:int<wu>) {xw=centrex ; y
         BottomW = top  + height
     }
 
+
+
 let RectangleIntersects (r1:RectangleW) (r2:RectangleW) : bool =
+
     if r1.LeftW >= r2.RightW then false
     else if r1.RightW <= r2.LeftW then false
     else if r1.TopW >= r2.BottomW then false
     else if r1.BottomW <= r2.TopW then false
     else true
 
-let HasListMemberThatIntersectsWith areaOfInstance getAreaOfListItem someList =
-    someList |> List.tryFind (fun listItem -> areaOfInstance |> RectangleIntersects (listItem |> getAreaOfListItem)) |> Option.isSome
 
-let CollisionsBetween (aList:'a list) (bList:'b list) getAreaOfA getAreaOfB =
+
+[<Struct>]
+type RegionObjectsList<'a> =
+    {
+        RegionObjectsList: 'a list
+        RegionObjectItemAreaGetter: 'a -> RectangleW
+    }
+
+
+
+let WithAreasObtainedBy areaGetterFunction someList =
+    {
+        RegionObjectsList = someList
+        RegionObjectItemAreaGetter = areaGetterFunction
+    }
+
+
+
+let HasListMemberThatIntersectsWith areaOfInstance regionObjectList =
+    let { RegionObjectsList = someList ; RegionObjectItemAreaGetter = getAreaOfListItem } = regionObjectList
+    someList 
+        |> List.tryFind (fun listItem -> areaOfInstance |> RectangleIntersects (listItem |> getAreaOfListItem)) 
+        |> Option.isSome
+
+
+
+let CollisionsBetween objectListA objectListB =
     
+    let { RegionObjectsList = aList ; RegionObjectItemAreaGetter = getAreaOfA } = objectListA
+    let { RegionObjectsList = bList ; RegionObjectItemAreaGetter = getAreaOfB } = objectListB
+
     let intersectingAs = aList |> List.filter (fun a -> 
         let aArea = a |> getAreaOfA
-        bList |> HasListMemberThatIntersectsWith aArea getAreaOfB)
+        objectListB |> HasListMemberThatIntersectsWith aArea)
 
     let intersectingBs = bList |> List.filter (fun b -> 
         let bArea = b |> getAreaOfB
-        aList |> HasListMemberThatIntersectsWith bArea getAreaOfA)
+        objectListA |> HasListMemberThatIntersectsWith bArea)
 
     intersectingAs , intersectingBs
 
