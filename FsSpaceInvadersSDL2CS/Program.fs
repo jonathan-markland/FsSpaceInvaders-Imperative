@@ -18,7 +18,7 @@ type SpaceInvadersBMPs =
         Mothership:  BMPSourceImage
         Font:        BMPSourceImage
     }
-
+    
 
 
 let LoadSpaceInvadersImages rootPath =
@@ -116,6 +116,8 @@ let main argv =
             let mutable fireJustPressed = false  // until discovered otherwise
             let mutable fireWaitingRelease = false
 
+            let mutable stop = false // TODO: hack
+
             let mutable quit = false
             while quit = false do
 
@@ -155,7 +157,11 @@ let main argv =
                         tickCount <- tickCount + 1u
                         // gamePlayState |> ApplyInputsToGamePlayState  tickCount
                         let inputEventData = { LeftHeld=leftHeld ; RightHeld=rightHeld ; FireJustPressed=fireJustPressed }
-                        CalculateNextFrameState gamePlayState inputEventData (TickCount(tickCount)) |> ignore // TODO: sort out return code handling
+                        if not stop then
+                            match CalculateNextFrameState gamePlayState inputEventData (TickCount(tickCount)) with
+                                | PlayerWon 
+                                | PlayerLost -> stop <- true
+                                | GameContinuing -> stop <- false
                         RenderGamePlay renderFunction gamePlayState
                         UpdateWindowSurface mainWindow
                         fireJustPressed <- false

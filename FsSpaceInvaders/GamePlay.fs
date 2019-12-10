@@ -241,6 +241,12 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
         let atLowestLevel invader = invader.InvaderExtents.BottomW >= ShipTopY
         world.Invaders |> List.exists (fun invader -> invader |> atLowestLevel)
 
+    let ShipCollidedWithInvader () =
+
+        let shipRect = world.Ship.ShipExtents
+        let collidedWithShip invader = invader.InvaderExtents |> RectangleIntersects shipRect
+        world.Invaders |> List.exists (fun invader -> invader |> collidedWithShip)
+
 
     MoveShip ()
     ConsiderBulletFiring ()
@@ -253,17 +259,24 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
     // TODO:  Release bombs
     // TODO:  Consider bombed ship or collided ship
-    // TODO:  Consider if an invader has touched down on land == loss
     // TODO:  Move bombs and terminate
     // TODO:  We have no explosions!
     // TODO:  Scoring.
 
+    let LevelOver () =
+        InvaderAtLowestLevel ()
+        || ShipCollidedWithInvader ()
+
     if NoInvadersLeft () then 
         PlayerWon
-    else if InvaderAtLowestLevel () then
+    else if LevelOver () then
         PlayerLost
     else
         GameContinuing
+
+
+
+
 
 
 let HeadingAlignmentScore   = LeftAlign
