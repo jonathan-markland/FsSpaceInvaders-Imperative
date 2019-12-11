@@ -28,3 +28,4 @@ let ShipTopY            = ScreenHeight - (CharBlock + ShipHeight)
 let BulletStartY        = ShipTopY - BulletHeight
 let BulletEndY          = 3 * CharBlock
 
+let BombFloorY          = ShipTopY + ShipHeight

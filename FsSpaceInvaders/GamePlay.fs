@@ -55,6 +55,9 @@ let NewGameWorld hiScore (timeNow:TickCount) : GameWorld =
         Bullets = 
             []
 
+        Bombs =
+            []
+
         Ship =
             {
                 WeaponReloadStartTimeOpt = None
@@ -77,28 +80,62 @@ type FrameResult = GameContinuing | PlayerWon | PlayerLost
 
 
 
+let NewBulletFiredFromCentrallyAbove someRectangle =
+
+    let leftSide = (HorizontalCentreOf someRectangle) - (BulletWidth / 2)
+    let baseY    = someRectangle.TopW
+
+    {
+        BulletExtents =
+            {
+                LeftW    = leftSide
+                RightW   = leftSide + BulletWidth
+                TopW     = baseY - BulletHeight
+                BottomW  = baseY
+            }
+    }
+
+
+
+let NewBombPositionedCentrallyUnder someRectangle =
+
+    let leftSide = (HorizontalCentreOf someRectangle) - (BombWidth / 2)
+    let topY    = someRectangle.BottomW
+
+    {
+        BombExtents =
+            {
+                LeftW    = leftSide
+                RightW   = leftSide + BombWidth
+                TopW     = topY 
+                BottomW  = topY + BombHeight
+            }
+    }
+
+
+
+
 let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:TickCount) =
+
+    let elapsedTime = timeNow --- world.GameStartTime
+
+    let RandomInvader () =
+
+        let invadersList = world.Invaders
+        match invadersList with
+            | [] ->
+                None
+            | _  ->
+                let countLeft = invadersList |> List.length
+                let (TickCount(ticks)) = timeNow
+                let selectedIndex = int (ticks % uint32 countLeft)
+                Some(invadersList |> List.item selectedIndex)
 
     let IncreaseScoreBy n =
 
         world.PlayStats.Score <- world.PlayStats.Score + n
         if world.PlayStats.Score > world.PlayStats.HiScore then
             world.PlayStats.HiScore <- world.PlayStats.Score
-
-    let NewBulletFiredFromCentrallyAbove someRectangle =
-
-        let leftSide = (HorizontalCentreOf someRectangle) - (BulletWidth / 2)
-        let baseY    = someRectangle.TopW
-
-        {
-            BulletExtents =
-                {
-                    LeftW    = leftSide
-                    RightW   = leftSide + BulletWidth
-                    TopW     = baseY - BulletHeight
-                    BottomW  = baseY
-                }
-        }
 
     let MoveShip () =
 
@@ -121,12 +158,26 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
         let CheckFireButton () =
 
             if input.FireJustPressed && world.Ship.WeaponReloadStartTimeOpt |> Option.isNone then
-                let updatedBulletList = (NewBulletFiredFromCentrallyAbove world.Ship.ShipExtents) :: world.Bullets
+                let newBullet = NewBulletFiredFromCentrallyAbove world.Ship.ShipExtents
+                let updatedBulletList = newBullet :: world.Bullets
                 world.Bullets <- updatedBulletList
                 world.Ship.WeaponReloadStartTimeOpt <- Some(timeNow)
 
         ConsiderReloadPenalty ()
         CheckFireButton ()
+
+    let ConsiderDroppingBombs () =
+
+        DoEvery TimeForNewBombCheck elapsedTime (fun () ->
+            let firingInvader = RandomInvader ()
+            match firingInvader with
+                | None -> ()
+                | Some(firingInvader) -> 
+                    let newBomb = NewBombPositionedCentrallyUnder (firingInvader |> AreaOfInvader)
+                    let updateBombsList = newBomb :: world.Bombs
+                    world.Bombs <- updateBombsList
+                    ()
+        )
 
     let UpdateBullets () =
 
@@ -136,11 +187,30 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
         let WhereBulletStillBelowTopmostPosition bullet =
             bullet.BulletExtents.TopW > BulletEndY
 
-        let bulletsStillLive = world.Bullets |> List.filter WhereBulletStillBelowTopmostPosition   // TODO: optimise for case where all are on screen still
+        let bulletsStillLive = 
+            world.Bullets |> List.filter WhereBulletStillBelowTopmostPosition   // TODO: optimise for case where all are on screen still
 
         bulletsStillLive |> List.iter ApplyUpwardMovementToBullet
 
         world.Bullets <- bulletsStillLive
+
+    let UpdateBombs () =
+
+        DoEvery TimeForBombUpdateCheck elapsedTime (fun () ->
+
+            let ApplyDownwardMovementToBomb b =
+                b.BombExtents <- b.BombExtents |> RectangleShuntedBy 0<wu> 1<wu>
+
+            let WhereBombStillAboveFloorPosition bullet =
+                bullet.BombExtents.BottomW < BombFloorY
+
+            let bombsStillAlive = 
+                world.Bombs |> List.filter WhereBombStillAboveFloorPosition   // TODO: optimise for case where all are on screen still
+
+            bombsStillAlive |> List.iter ApplyDownwardMovementToBomb
+
+            world.Bombs <- bombsStillAlive
+        )
 
     let ConsiderShotInvaders () =
 
@@ -247,25 +317,30 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
         let collidedWithShip invader = invader.InvaderExtents |> RectangleIntersects shipRect
         world.Invaders |> List.exists (fun invader -> invader |> collidedWithShip)
 
+    let ShipCollidedWithBomb () =
+
+        let shipRect = world.Ship.ShipExtents
+        let collidedWithShip bomb = bomb.BombExtents |> RectangleIntersects shipRect
+        world.Bombs |> List.exists (fun bomb -> bomb |> collidedWithShip)
 
     MoveShip ()
     ConsiderBulletFiring ()
+    ConsiderDroppingBombs ()
     UpdateBullets ()
+    UpdateBombs ()
     ConsiderShotInvaders ()
     ConsiderShotMothership ()
     MoveInvaders ()
     MoveMotherships ()
     ConsiderIntroducingMothership ()
 
-    // TODO:  Release bombs
-    // TODO:  Consider bombed ship or collided ship
-    // TODO:  Move bombs and terminate
     // TODO:  We have no explosions!
     // TODO:  Scoring.
 
     let LevelOver () =
         InvaderAtLowestLevel ()
         || ShipCollidedWithInvader ()
+        || ShipCollidedWithBomb ()
 
     if NoInvadersLeft () then 
         PlayerWon
@@ -291,6 +366,7 @@ type RenderActions =
     | DrawShip       of l2:int<wu> * t2:int<wu>
     | DrawBullet     of l3:int<wu> * t3:int<wu>
     | DrawMothership of l4:int<wu> * t4:int<wu>
+    | DrawBomb       of l6:int<wu> * t6:int<wu>
     | ClearScreen
     | DrawText       of x:int<wu> * topY5:int<wu> * message:string * textAlign:TextAlignment
 
@@ -341,6 +417,13 @@ let RenderGamePlay renderer (gameWorld:GameWorld) =
                 DrawBullet(
                     bullet.BulletExtents.LeftW,
                     bullet.BulletExtents.TopW)))
+
+    gameWorld.Bombs |> List.iter
+        (fun bomb -> 
+            renderer (
+                DrawBomb(
+                    bomb.BombExtents.LeftW,
+                    bomb.BombExtents.TopW)))
 
     let text x top message alignment =
         renderer (DrawText (x, top, message, alignment))

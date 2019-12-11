@@ -72,6 +72,21 @@ let NewBulletAt (x,y) =
     }
 
 
+/// Record to represent bomb instance, created
+/// only when the bomb instance appears.
+type Bomb =
+    {
+        mutable BombExtents: RectangleW
+    }
+
+let AreaOfBomb b = b.BombExtents
+
+let NewBombAt (x,y) =
+    { 
+        BombExtents = { LeftW=x ; TopW=y ; RightW=x+BombWidth ; BottomW=y+BombHeight }
+    }
+
+
 /// The Game world state during gameplay.
 type GameWorld =
     {
@@ -80,6 +95,7 @@ type GameWorld =
         mutable Motherships:        Mothership list  // anticipated max one for now, but type-similarity to Invaders allows some uniform handling.
         mutable Invaders:           Invader list
         mutable Bullets:            Bullet list
+        mutable Bombs:              Bomb list
         Ship:                       Ship
     }
 

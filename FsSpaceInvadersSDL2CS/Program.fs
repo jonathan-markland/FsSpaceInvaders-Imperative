@@ -15,6 +15,7 @@ type SpaceInvadersBMPs =
         RedInvader:  BMPSourceImage
         BlueInvader: BMPSourceImage
         Bullet:      BMPSourceImage
+        Bomb:        BMPSourceImage
         Mothership:  BMPSourceImage
         Font:        BMPSourceImage
     }
@@ -33,6 +34,7 @@ let LoadSpaceInvadersImages rootPath =
         RedInvader  = fromFile "RedInvader"
         BlueInvader = fromFile "BlueInvader"
         Bullet      = fromFile "Bullet"
+        Bomb        = fromFile "Bomb"
         Mothership  = fromFile "Mothership"
         Font        = fromFile "Font"
     }
@@ -48,6 +50,9 @@ let RenderToSdlSurface imageSet fontDefinition targetSurface renderAction =
         
         | DrawBullet(left,top) ->
             DrawImage targetSurface imageSet.Bullet (px left) (px top)
+
+        | DrawBomb(left,top) ->
+            DrawImage targetSurface imageSet.Bomb (px left) (px top)
 
         | DrawInvader(left,top,dogTag) ->
             let invaderBmp =

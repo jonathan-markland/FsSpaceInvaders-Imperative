@@ -20,6 +20,9 @@ let InvaderVSpacing      = 4<wu>
 let BulletWidth          = 4<wu>
 let BulletHeight         = 8<wu>
 
+let BombWidth            = 4<wu>
+let BombHeight           = 6<wu>
+
 let ShipWidth            = 16<wu>
 let ShipHeight           = 32<wu>
 
