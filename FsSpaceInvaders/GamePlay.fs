@@ -335,7 +335,6 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
     ConsiderIntroducingMothership ()
 
     // TODO:  We have no explosions!
-    // TODO:  Scoring.
 
     let LevelOver () =
         InvaderAtLowestLevel ()
