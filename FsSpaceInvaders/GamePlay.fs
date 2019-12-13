@@ -58,6 +58,9 @@ let NewGameWorld hiScore (timeNow:TickCount) : GameWorld =
         Bombs =
             []
 
+        Explosions =
+            []
+
         Ship =
             {
                 WeaponReloadStartTimeOpt = None
@@ -212,6 +215,17 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
             world.Bombs <- bombsStillAlive
         )
 
+    let ExplosionsForAll listOfThings areaOfThing worldExplosions =
+
+        worldExplosions |> List.append
+
+            (listOfThings |> List.map (fun t ->
+                {
+                    ExplosionExtents = areaOfThing t
+                    StartTime        = timeNow
+                }
+            ))
+
     let ConsiderShotInvaders () =
 
         let deadBullets,deadInvaders = 
@@ -226,8 +240,11 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
         let survingBullets = world.Bullets |> List.filter (NotInList deadBullets AreaOfBullet)  // TODO: Prepare to return same list favouring no removals
 
+        let sumTotalExplosions = ExplosionsForAll deadInvaders AreaOfInvader world.Explosions
+
         world.Bullets <- survingBullets
         world.Invaders <- survingInvaders
+        world.Explosions <- sumTotalExplosions
         IncreaseScoreBy scoreIncrease
 
     let ConsiderShotMothership () =
@@ -246,9 +263,20 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
         let survingBullets = world.Bullets |> List.filter (NotInList deadBullets AreaOfBullet)  // TODO: Prepare to return same list favouring no removals
 
+        let sumTotalExplosions = ExplosionsForAll deadMotherships AreaOfMothership world.Explosions
+
         world.Bullets <- survingBullets
         world.Motherships <- survingMotherships
+        world.Explosions <- sumTotalExplosions
         IncreaseScoreBy scoreIncrease
+
+    let ConsiderRemovingExplosions () =
+
+        let survivingExplosions = world.Explosions |> List.filter (fun e ->     // TODO: Prepare to return same list favouring no removals
+            let elapsedSinceExplosionStarted = timeNow --- e.StartTime
+            elapsedSinceExplosionStarted < TimeForWholeExplosion)
+
+        world.Explosions <- survivingExplosions
 
     let MoveInvaders () =
     
@@ -323,6 +351,19 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
         let collidedWithShip bomb = bomb.BombExtents |> RectangleIntersects shipRect
         world.Bombs |> List.exists (fun bomb -> bomb |> collidedWithShip)
 
+    let ExplodeTheShip () =
+
+        let shipExplosion = 
+            {
+                ExplosionExtents = world.Ship.ShipExtents
+                StartTime = timeNow
+            }
+
+        let newExplosionsList =
+            shipExplosion :: world.Explosions
+
+        world.Explosions <- newExplosionsList
+
     MoveShip ()
     ConsiderBulletFiring ()
     ConsiderDroppingBombs ()
@@ -333,8 +374,9 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
     MoveInvaders ()
     MoveMotherships ()
     ConsiderIntroducingMothership ()
+    ConsiderRemovingExplosions ()
 
-    // TODO:  We have no explosions!
+    // TODO: Require carrying on for a few frames post-ship-destruction.
 
     let LevelOver () =
         InvaderAtLowestLevel ()
@@ -344,6 +386,7 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
     if NoInvadersLeft () then 
         PlayerWon
     else if LevelOver () then
+        ExplodeTheShip ()
         PlayerLost
     else
         GameContinuing
@@ -366,6 +409,7 @@ type RenderActions =
     | DrawBullet     of l3:int<wu> * t3:int<wu>
     | DrawMothership of l4:int<wu> * t4:int<wu>
     | DrawBomb       of l6:int<wu> * t6:int<wu>
+    | DrawExplosion  of explosion:Explosion
     | ClearScreen
     | DrawText       of x:int<wu> * topY5:int<wu> * message:string * textAlign:TextAlignment
 
@@ -423,6 +467,10 @@ let RenderGamePlay renderer (gameWorld:GameWorld) =
                 DrawBomb(
                     bomb.BombExtents.LeftW,
                     bomb.BombExtents.TopW)))
+
+    gameWorld.Explosions |> List.iter
+        (fun explosion ->
+            renderer (DrawExplosion(explosion)))
 
     let text x top message alignment =
         renderer (DrawText (x, top, message, alignment))

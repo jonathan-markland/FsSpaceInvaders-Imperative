@@ -67,6 +67,15 @@ let RenderToSdlSurface imageSet fontDefinition targetSurface renderAction =
         | DrawShip(left,top) ->
             DrawImage targetSurface imageSet.Ship (px left) (px top)
 
+        | DrawExplosion(e) ->
+            DrawFilledRectangle 
+                targetSurface 
+                (px e.ExplosionExtents.LeftW) 
+                (px e.ExplosionExtents.TopW) 
+                (px e.ExplosionExtents.RightW) 
+                (px e.ExplosionExtents.BottomW) 
+                0xFFFF00u
+
         | ClearScreen ->
             DrawFilledRectangle targetSurface 0 0 256 256 0u
             

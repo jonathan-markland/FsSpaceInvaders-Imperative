@@ -87,6 +87,25 @@ let NewBombAt (x,y) =
     }
 
 
+/// Record to represent explosion instance, created
+/// only when the explosion instance appears.
+/// TimeForWholeExplosion gives the duration.
+/// Explosions can be different sizes.
+type Explosion =
+    {
+        ExplosionExtents: RectangleW
+        StartTime:        TickCount
+    }
+
+let AreaOfExplosion b = b.ExplosionExtents
+
+let NewExplosionAt extentsRectangle startTime =
+    { 
+        ExplosionExtents = extentsRectangle
+        StartTime        = startTime
+    }
+
+
 /// The Game world state during gameplay.
 type GameWorld =
     {
@@ -96,6 +115,7 @@ type GameWorld =
         mutable Invaders:           Invader list
         mutable Bullets:            Bullet list
         mutable Bombs:              Bomb list
+        mutable Explosions:         Explosion list
         Ship:                       Ship
     }
 
