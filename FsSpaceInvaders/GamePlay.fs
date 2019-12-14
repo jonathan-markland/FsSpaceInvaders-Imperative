@@ -364,6 +364,11 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
         world.Explosions <- newExplosionsList
 
+    let LevelOver () =
+        InvaderAtLowestLevel ()
+        || ShipCollidedWithInvader ()
+        || ShipCollidedWithBomb ()
+
     match world.PlayEndedYet with
 
         | None ->
@@ -378,11 +383,6 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
             MoveMotherships ()
             ConsiderIntroducingMothership ()
             ConsiderRemovingExplosions ()
-
-            let LevelOver () =
-                InvaderAtLowestLevel ()
-                || ShipCollidedWithInvader ()
-                || ShipCollidedWithBomb ()
 
             world.PlayEndedYet <- 
                 if NoInvadersLeft () then 
@@ -401,14 +401,12 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
             if elapsedInEndState < TimeForEndState then
 
-                ConsiderDroppingBombs ()
                 UpdateBullets ()
                 UpdateBombs ()
                 ConsiderShotInvaders ()
                 ConsiderShotMothership ()
                 MoveInvaders ()
                 MoveMotherships ()
-                ConsiderIntroducingMothership ()
                 ConsiderRemovingExplosions ()
 
                 GameContinuing
