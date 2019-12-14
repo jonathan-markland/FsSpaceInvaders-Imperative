@@ -10,8 +10,6 @@ open ScreenLayout
 open Dimensions
 open Scoring
 open Rates
-open Fonts
-open DrawingCommands
 
 
 /// Create a fresh game world for a new game.
@@ -76,6 +74,9 @@ let NewGameWorld hiScore (timeNow:TickCount) : GameWorld =
                         BottomW = y + ShipHeight
                     } 
             }
+
+        PlayEndedYet = None
+
     }
 
 
@@ -363,35 +364,57 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
         world.Explosions <- newExplosionsList
 
-    MoveShip ()
-    ConsiderBulletFiring ()
-    ConsiderDroppingBombs ()
-    UpdateBullets ()
-    UpdateBombs ()
-    ConsiderShotInvaders ()
-    ConsiderShotMothership ()
-    MoveInvaders ()
-    MoveMotherships ()
-    ConsiderIntroducingMothership ()
-    ConsiderRemovingExplosions ()
+    match world.PlayEndedYet with
 
-    // TODO: Require carrying on for a few frames post-ship-destruction.
+        | None ->
+            MoveShip ()
+            ConsiderBulletFiring ()
+            ConsiderDroppingBombs ()
+            UpdateBullets ()
+            UpdateBombs ()
+            ConsiderShotInvaders ()
+            ConsiderShotMothership ()
+            MoveInvaders ()
+            MoveMotherships ()
+            ConsiderIntroducingMothership ()
+            ConsiderRemovingExplosions ()
 
-    let LevelOver () =
-        InvaderAtLowestLevel ()
-        || ShipCollidedWithInvader ()
-        || ShipCollidedWithBomb ()
+            let LevelOver () =
+                InvaderAtLowestLevel ()
+                || ShipCollidedWithInvader ()
+                || ShipCollidedWithBomb ()
 
-    if NoInvadersLeft () then 
-        PlayerWon
-    else if LevelOver () then
-        ExplodeTheShip ()
-        PlayerLost
-    else
-        GameContinuing
+            world.PlayEndedYet <- 
+                if NoInvadersLeft () then 
+                    Some(timeNow, EndBecauseWon)
+                else if LevelOver () then
+                    ExplodeTheShip ()
+                    Some(timeNow, EndBecauseLost)
+                else
+                    None
 
+            GameContinuing
 
+        | Some(endedAt,reason) ->
 
+            let elapsedInEndState = timeNow --- endedAt
 
+            if elapsedInEndState < TimeForEndState then
 
-            
+                ConsiderDroppingBombs ()
+                UpdateBullets ()
+                UpdateBombs ()
+                ConsiderShotInvaders ()
+                ConsiderShotMothership ()
+                MoveInvaders ()
+                MoveMotherships ()
+                ConsiderIntroducingMothership ()
+                ConsiderRemovingExplosions ()
+
+                GameContinuing
+
+            else
+                match reason with
+                    | EndBecauseWon  -> PlayerWon
+                    | EndBecauseLost -> PlayerLost
+                    

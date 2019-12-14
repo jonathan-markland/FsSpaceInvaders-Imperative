@@ -106,6 +106,10 @@ let NewExplosionAt extentsRectangle startTime =
     }
 
 
+type GamePlayEndReason = EndBecauseWon | EndBecauseLost
+
+
+
 /// The Game world state during gameplay.
 type GameWorld =
     {
@@ -117,6 +121,7 @@ type GameWorld =
         mutable Bombs:              Bomb list
         mutable Explosions:         Explosion list
         Ship:                       Ship
+        mutable PlayEndedYet:       (TickCount * GamePlayEndReason) option
     }
 
 
