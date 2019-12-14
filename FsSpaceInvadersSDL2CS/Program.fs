@@ -3,6 +3,8 @@ open System.IO
 open SDLCover
 open GamePlay
 open GamePlayTypes
+open GameDrawing
+open DrawingCommands
 open Rules
 open Mechanics
 open InputEventData
@@ -40,13 +42,15 @@ let LoadSpaceInvadersImages rootPath =
     }
 
 
-
-let RenderToSdlSurface imageSet fontDefinition targetSurface renderAction =
+/// Render game drawing command to the screen.
+/// Here we are choosing to use a 1:1 mapping from world coordinates onto
+/// a 256 x 256 pixel SDL surface.
+let RenderToSdlSurface imageSet fontDefinition targetSurface drawingCommand =
 
     /// Convert World Units <wu> to our pixels.  It happens that this is 1:1 with 256 x 256 schemes.
     let px (n:int<wu>) = int n
 
-    match renderAction with
+    match drawingCommand with
         
         | DrawBullet(left,top) ->
             DrawImage targetSurface imageSet.Bullet (px left) (px top)
@@ -68,7 +72,7 @@ let RenderToSdlSurface imageSet fontDefinition targetSurface renderAction =
             DrawImage targetSurface imageSet.Ship (px left) (px top)
 
         | DrawExplosion(e) ->
-            DrawFilledRectangle 
+            DrawFilledRectangle  // TODO
                 targetSurface 
                 (px e.ExplosionExtents.LeftW) 
                 (px e.ExplosionExtents.TopW) 
@@ -76,12 +80,18 @@ let RenderToSdlSurface imageSet fontDefinition targetSurface renderAction =
                 (px e.ExplosionExtents.BottomW) 
                 0xFFFF00u
 
-        | ClearScreen ->
-            DrawFilledRectangle targetSurface 0 0 256 256 0u
-            
         | DrawText(x,top,message,textAlign) ->
             DrawTextString targetSurface (px x) (px top) message textAlign fontDefinition
 
+        | TitleBackground ->
+            DrawFilledRectangle targetSurface 0 0 256 256 0x000040u
+
+        | GameplayBackground ->
+            DrawFilledRectangle targetSurface 0 0 256 256 0u
+
+        | GameOverBackground ->
+            DrawFilledRectangle targetSurface 0 0 256 256 0x400000u
+    
 
 
 let TimerCallback (interval:uint32) (param:nativeint) : uint32 =
@@ -176,7 +186,7 @@ let main argv =
                                 | PlayerWon 
                                 | PlayerLost -> stop <- true
                                 | GameContinuing -> stop <- false
-                        RenderGamePlay renderFunction gamePlayState
+                        RenderGameWorld renderFunction gamePlayState
                         UpdateWindowSurface mainWindow
                         fireJustPressed <- false
         ) 

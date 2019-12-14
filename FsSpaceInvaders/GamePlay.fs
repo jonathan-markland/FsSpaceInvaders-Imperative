@@ -11,6 +11,7 @@ open Dimensions
 open Scoring
 open Rates
 open Fonts
+open DrawingCommands
 
 
 /// Create a fresh game world for a new game.
@@ -152,11 +153,11 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
         let ConsiderReloadPenalty () =
 
-            match world.Ship.WeaponReloadStartTimeOpt,timeNow with
-                | Some(TickCount(startTime)),TickCount(timeNow) -> 
-                    if (timeNow - startTime) >= TimeForReloadShipWeapon then
+            match world.Ship.WeaponReloadStartTimeOpt with
+                | Some(startTime) -> 
+                    if (timeNow --- startTime) >= TimeForReloadShipWeapon then
                         world.Ship.WeaponReloadStartTimeOpt <- None
-                | None,_ -> ()
+                | None -> ()
 
         let CheckFireButton () =
 
@@ -234,7 +235,6 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
                 (world.Invaders |> WithAreasObtainedBy AreaOfInvader)
 
         let scoreIncrease = (List.length deadInvaders) * ScoreForKillingInvader
-        // TODO: explosions.
 
         let survingInvaders = world.Invaders |> List.filter (NotInList deadInvaders DogTagOfInvader)  // TODO: Prepare to return same list favouring no removals
 
@@ -257,7 +257,6 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
                 (world.Motherships |> WithAreasObtainedBy AreaOfMothership)
 
         let scoreIncrease = (List.length deadMotherships) * ScoreForKillingMothership
-        // TODO: explosions.
 
         let survingMotherships = world.Motherships |> List.filter (NotInList deadMotherships AreaOfMothership)  // TODO: Prepare to return same list favouring no removals
 
@@ -393,101 +392,6 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
 
 
-
-
-
-let HeadingAlignmentScore   = LeftAlign
-let HeadingAlignmentHiScore = CentreAlign
-let HeadingAlignmentLevel   = CentreAlign
-let HeadingAlignmentLives   = RightAlign
-
-
-[<Struct>]
-type RenderActions =
-    | DrawInvader    of l1:int<wu> * t1:int<wu> * dogTag:DogTag
-    | DrawShip       of l2:int<wu> * t2:int<wu>
-    | DrawBullet     of l3:int<wu> * t3:int<wu>
-    | DrawMothership of l4:int<wu> * t4:int<wu>
-    | DrawBomb       of l6:int<wu> * t6:int<wu>
-    | DrawExplosion  of explosion:Explosion
-    | ClearScreen
-    | DrawText       of x:int<wu> * topY5:int<wu> * message:string * textAlign:TextAlignment
-
-
-let BulletPositionOnTopOfShip theShip =
-
-    let shipL = theShip.ShipExtents.LeftW
-    let shipT = theShip.ShipExtents.TopW
-
-    let bleft = shipL + ((ShipWidth - BulletWidth)/2)
-    let btop  = shipT - BulletHeight
-
-    (bleft,btop)
-    
-
-let RenderGamePlay renderer (gameWorld:GameWorld) =
-
-    renderer (ClearScreen)
-
-    gameWorld.Motherships |> List.iter 
-        (fun motherShip -> 
-            renderer (
-                DrawMothership(
-                    motherShip.MothershipExtents.LeftW,
-                    motherShip.MothershipExtents.TopW)))
-
-    gameWorld.Invaders |> List.iter
-        (fun invader -> 
-            renderer (
-                DrawInvader(
-                    invader.InvaderExtents.LeftW,
-                    invader.InvaderExtents.TopW,
-                    invader.DogTag)))
-
-    let theShip = gameWorld.Ship
-    let shipL = theShip.ShipExtents.LeftW
-    let shipT = theShip.ShipExtents.TopW
-
-    renderer (DrawShip(shipL, shipT))
-
-    match theShip.WeaponReloadStartTimeOpt with
-        | Some(_) -> ()
-        | None    -> renderer (DrawBullet (BulletPositionOnTopOfShip theShip))
-
-    gameWorld.Bullets |> List.iter
-        (fun bullet -> 
-            renderer (
-                DrawBullet(
-                    bullet.BulletExtents.LeftW,
-                    bullet.BulletExtents.TopW)))
-
-    gameWorld.Bombs |> List.iter
-        (fun bomb -> 
-            renderer (
-                DrawBomb(
-                    bomb.BombExtents.LeftW,
-                    bomb.BombExtents.TopW)))
-
-    gameWorld.Explosions |> List.iter
-        (fun explosion ->
-            renderer (DrawExplosion(explosion)))
-
-    let text x top message alignment =
-        renderer (DrawText (x, top, message, alignment))
-
-    let number x top (value:int) alignment =
-        let s = value.ToString()
-        renderer (DrawText (x, top, s, alignment))
-
-    text   HeadingScoreX   ScoreboardTitlesTopY "SCORE"   HeadingAlignmentScore  
-    text   HeadingHiScoreX ScoreboardTitlesTopY "HISCORE" HeadingAlignmentHiScore
-    text   HeadingLevelX   ScoreboardTitlesTopY "LEVEL"   HeadingAlignmentLevel  
-    text   HeadingLivesX   ScoreboardTitlesTopY "LIVES"   HeadingAlignmentLives  
-
-    number HeadingScoreX   ScoreboardValuesTopY gameWorld.PlayStats.Score   HeadingAlignmentScore  
-    number HeadingHiScoreX ScoreboardValuesTopY gameWorld.PlayStats.HiScore HeadingAlignmentHiScore
-    number HeadingLevelX   ScoreboardValuesTopY gameWorld.PlayStats.Level   HeadingAlignmentLevel  
-    number HeadingLivesX   ScoreboardValuesTopY gameWorld.PlayStats.Lives   HeadingAlignmentLives  
 
 
             
