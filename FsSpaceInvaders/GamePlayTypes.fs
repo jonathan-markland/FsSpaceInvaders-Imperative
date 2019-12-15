@@ -125,16 +125,11 @@ type GameWorld =
     }
 
 
-type CrossGameState =
-    {
-        HiScore: int
-    }
-
 
 type Screen =
-    | WelcomeScreen  of CrossGameState
-    | GamePlayScreen of CrossGameState * GameWorld
-    | GameOverScreen of CrossGameState
+    | WelcomeScreen  of hiScore:int
+    | GamePlayScreen of GameWorld
+    | GameOverScreen of hiScore:int
 
 
 

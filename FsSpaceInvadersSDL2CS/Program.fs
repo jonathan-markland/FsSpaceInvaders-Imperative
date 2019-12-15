@@ -9,6 +9,8 @@ open Rules
 open Mechanics
 open InputEventData
 open Geometry
+open ScreenDrawing
+open Screens
 
 
 type SpaceInvadersBMPs =
@@ -72,7 +74,7 @@ let RenderToSdlSurface imageSet fontDefinition targetSurface drawingCommand =
             DrawImage targetSurface imageSet.Ship (px left) (px top)
 
         | DrawExplosion(e) ->
-            DrawFilledRectangle  // TODO
+            DrawFilledRectangle  // TODO:  Provide an explosion graphic / animation based on elapsed time.
                 targetSurface 
                 (px e.ExplosionExtents.LeftW) 
                 (px e.ExplosionExtents.TopW) 
@@ -119,9 +121,7 @@ let main argv =
     let imageSet = LoadSpaceInvadersImages ""
     let fontDefinition = MakeFont imageSet.Font.ImageHandle
 
-    let hiScore = 1000 // hack
-    let timeNowTickCount = TickCount(0u) // hack
-    let gamePlayState = NewGameWorld hiScore timeNowTickCount
+    let mutable screenState = CompletelyNewGameStateWithResetHiScore ()
 
     let result = WithNewMainWindowDo "Space Invaders" 256 256 (fun mainWindow ->
 
@@ -179,16 +179,12 @@ let main argv =
                     else if msg = SDL.SDL_EventType.SDL_USEREVENT then
                         // ~ This is the AddTimer event handler 
                         tickCount <- tickCount + 1u
-                        // gamePlayState |> ApplyInputsToGamePlayState  tickCount
                         let inputEventData = { LeftHeld=leftHeld ; RightHeld=rightHeld ; FireJustPressed=fireJustPressed }
-                        if not stop then
-                            match CalculateNextFrameState gamePlayState inputEventData (TickCount(tickCount)) with
-                                | PlayerWon 
-                                | PlayerLost -> stop <- true
-                                | GameContinuing -> stop <- false
-                        RenderGameWorld renderFunction gamePlayState
+                        let nextState = CalculateNextScreenState screenState inputEventData (TickCount(tickCount))
+                        RenderScreen renderFunction nextState
                         UpdateWindowSurface mainWindow
                         fireJustPressed <- false
+                        screenState <- nextState
         ) 
     )
 
