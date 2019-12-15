@@ -13,7 +13,7 @@ open Rates
 
 
 /// Create a fresh game world for a new game.
-let NewGameWorld hiScore (timeNow:TickCount) : GameWorld =
+let NewGameWorld score hiScore lives level (timeNow:TickCount) : GameWorld =
 
     let invaderHorizSpacing = ScreenWidth / (InvadersPerRow + 1)    // NB: Intentionally is integer division, so will truncate.
     let invaderHorizSpan    = invaderHorizSpacing * (InvadersPerRow - 1)   // NB: We centre THIS span, so it looks nice even if division truncated.
@@ -38,9 +38,9 @@ let NewGameWorld hiScore (timeNow:TickCount) : GameWorld =
         PlayStats =
             {
                 HiScore = hiScore
-                Level   = 1
-                Score   = 0
-                Lives   = 3
+                Level   = level
+                Score   = score
+                Lives   = lives
             }
 
         Motherships = 
@@ -77,6 +77,24 @@ let NewGameWorld hiScore (timeNow:TickCount) : GameWorld =
 
         PlayEndedYet = None
 
+    }
+
+
+
+/// Given a world where the player has just lost a life,
+/// return a new world for the next life.
+let NextLifeGameWorld (outgoing:GameWorld) : GameWorld =
+
+    {
+        GameStartTime = outgoing.GameStartTime
+        PlayStats     = { outgoing.PlayStats with Lives = outgoing.PlayStats.Lives - 1 }
+        Motherships   = outgoing.Motherships
+        Invaders      = outgoing.Invaders
+        Bullets       = []
+        Bombs         = []
+        Explosions    = []
+        Ship          = outgoing.Ship
+        PlayEndedYet  = None
     }
 
 

@@ -20,3 +20,4 @@ type DrawingCommand =
     | TitleBackground
     | GameplayBackground
     | GameOverBackground
+    | LifeOverBackground

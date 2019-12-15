@@ -94,6 +94,10 @@ let RenderToSdlSurface imageSet fontDefinition targetSurface drawingCommand =
         | GameOverBackground ->
             DrawFilledRectangle targetSurface 0 0 256 256 0x400000u
     
+        | LifeOverBackground ->
+            DrawFilledRectangle targetSurface 0 0 256 256 0x004000u
+
+
 
 
 let TimerCallback (interval:uint32) (param:nativeint) : uint32 =

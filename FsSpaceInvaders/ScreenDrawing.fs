@@ -23,6 +23,14 @@ let RenderGamePlayScreen render (gameWorld:GameWorld) =
 
 
 
+let RenderLifeOverScreen render =
+    let text x top message alignment =  // TODO: Move out?
+        render (DrawText (x, top, message, alignment))
+    render (LifeOverBackground)
+    text   (ScreenWidth / 2) (ScreenHeight / 2) "SHIP DESTROYED" CentreAlign  // TODO: Text not vertically centred in the screen.
+
+
+
 let RenderGameOverScreen render =
     let text x top message alignment =  // TODO: Move out?
         render (DrawText (x, top, message, alignment))
@@ -35,6 +43,7 @@ let RenderScreen render screen =
     match screen with
         | WelcomeScreen(_)          -> RenderWelcomeScreen render
         | GamePlayScreen(gameWorld) -> RenderGamePlayScreen render gameWorld
+        | LifeOverScreen(_)         -> RenderLifeOverScreen render
         | GameOverScreen(_)         -> RenderGameOverScreen render
 
 
