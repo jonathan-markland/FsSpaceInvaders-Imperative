@@ -154,9 +154,6 @@ let main argv =
                     if msg = SDL.SDL_EventType.SDL_QUIT then 
                         quit <- true
 
-                    else if msg = SDL.SDL_EventType.SDL_MOUSEBUTTONDOWN then 
-                        quit <- true
-
                     else if msg = SDL.SDL_EventType.SDL_KEYDOWN then
                         match event.key.keysym.scancode with
                             | SDL.SDL_Scancode.SDL_SCANCODE_LEFT  -> leftHeld <- true
