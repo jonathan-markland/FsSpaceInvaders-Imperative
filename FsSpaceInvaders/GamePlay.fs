@@ -12,13 +12,13 @@ open Scoring
 open Rates
 
 
-/// Create a fresh game world for a new game.
-let NewGameWorld score hiScore lives level (timeNow:TickCount) : GameWorld =
+
+let NewInvaderPack () =
 
     let invaderHorizSpacing = ScreenWidth / (InvadersPerRow + 1)    // NB: Intentionally is integer division, so will truncate.
     let invaderHorizSpan    = invaderHorizSpacing * (InvadersPerRow - 1)   // NB: We centre THIS span, so it looks nice even if division truncated.
     let invaderLeftSide     = (ScreenWidth - invaderHorizSpan) / 2
-    
+
     let NewInvader x y =
 
         let InitialPositionCentreForInvader x y =
@@ -32,6 +32,33 @@ let NewGameWorld score hiScore lives level (timeNow:TickCount) : GameWorld =
             InvaderExtents = (InitialPositionCentreForInvader x y) |> RectangleCenteredAboutPoint InvaderWidth InvaderHeight
         }
 
+    [for y in 1..InvaderRowsCount do
+        for x in 1..InvadersPerRow do
+            NewInvader x y]
+
+
+
+let ShipInLevelStartPosition () =
+
+    {
+        WeaponReloadStartTimeOpt = None
+
+        ShipExtents =
+            let x = ScreenCentreX - (ShipWidth / 2)
+            let y = ShipTopY
+            { 
+                LeftW   = x
+                TopW    = y
+                RightW  = x + ShipWidth
+                BottomW = y + ShipHeight
+            } 
+    }
+
+
+
+/// Create a fresh game world for a new game.
+let NewGameWorld score hiScore lives level (timeNow:TickCount) : GameWorld =
+
     {
         GameStartTime = timeNow
 
@@ -43,40 +70,13 @@ let NewGameWorld score hiScore lives level (timeNow:TickCount) : GameWorld =
                 Lives   = lives
             }
 
-        Motherships = 
-            []
-
-        Invaders = 
-            [for y in 1..InvaderRowsCount do
-                for x in 1..InvadersPerRow do
-                    NewInvader x y]
-
-        Bullets = 
-            []
-
-        Bombs =
-            []
-
-        Explosions =
-            []
-
-        Ship =
-            {
-                WeaponReloadStartTimeOpt = None
-
-                ShipExtents =
-                    let x = ScreenCentreX - (ShipWidth / 2)
-                    let y = ShipTopY
-                    { 
-                        LeftW   = x
-                        TopW    = y
-                        RightW  = x + ShipWidth
-                        BottomW = y + ShipHeight
-                    } 
-            }
-
+        Motherships  = []
+        Invaders     = NewInvaderPack ()
+        Bullets      = []
+        Bombs        = []
+        Explosions   = []
+        Ship         = ShipInLevelStartPosition ()
         PlayEndedYet = None
-
     }
 
 
@@ -85,15 +85,37 @@ let NewGameWorld score hiScore lives level (timeNow:TickCount) : GameWorld =
 /// return a new world for the next life.
 let NextLifeGameWorld (outgoing:GameWorld) : GameWorld =
 
+    let oldStats = outgoing.PlayStats
+
     {
         GameStartTime = outgoing.GameStartTime
-        PlayStats     = { outgoing.PlayStats with Lives = outgoing.PlayStats.Lives - 1 }
+        PlayStats     = { oldStats with Lives = oldStats.Lives - 1 }
         Motherships   = outgoing.Motherships
         Invaders      = outgoing.Invaders
         Bullets       = []
         Bombs         = []
         Explosions    = []
         Ship          = outgoing.Ship
+        PlayEndedYet  = None
+    }
+
+
+
+/// Given a world where the player has just won the level,
+/// return a new world for the next level.
+let NextLevelGameWorld (outgoing:GameWorld) : GameWorld =
+
+    let oldStats = outgoing.PlayStats
+
+    {
+        GameStartTime = outgoing.GameStartTime
+        PlayStats     = { oldStats with Lives = oldStats.Lives + 1 ; Level = oldStats.Level + 1 }
+        Motherships   = []
+        Invaders      = NewInvaderPack ()
+        Bullets       = []
+        Bombs         = []
+        Explosions    = []
+        Ship          = ShipInLevelStartPosition ()
         PlayEndedYet  = None
     }
 
@@ -142,7 +164,7 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
     let elapsedTime = timeNow --- world.GameStartTime
 
-    let RandomInvader () =
+    let RandomInvader () =  // TODO: This exhibits really bad gameplay
 
         let invadersList = world.Invaders
         match invadersList with

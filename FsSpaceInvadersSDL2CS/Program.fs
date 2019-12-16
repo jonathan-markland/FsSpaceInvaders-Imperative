@@ -94,6 +94,9 @@ let RenderToSdlSurface imageSet fontDefinition targetSurface drawingCommand =
         | GameOverBackground ->
             DrawFilledRectangle targetSurface 0 0 256 256 0x400000u
     
+        | NextLevelBackground ->
+            DrawFilledRectangle targetSurface 0 0 256 256 0x400040u
+
         | LifeOverBackground ->
             DrawFilledRectangle targetSurface 0 0 256 256 0x004000u
 

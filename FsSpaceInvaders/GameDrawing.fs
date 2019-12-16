@@ -35,15 +35,17 @@ let RenderGameWorld render (gameWorld:GameWorld) =
                     invader.InvaderExtents.TopW,
                     invader.DogTag)))
 
-    let theShip = gameWorld.Ship
-    let shipL = theShip.ShipExtents.LeftW
-    let shipT = theShip.ShipExtents.TopW
+    if gameWorld.PlayEndedYet |> Option.isNone then
 
-    render (DrawShip(shipL, shipT))
+        let theShip = gameWorld.Ship
+        let shipL = theShip.ShipExtents.LeftW
+        let shipT = theShip.ShipExtents.TopW
 
-    match theShip.WeaponReloadStartTimeOpt with
-        | Some(_) -> ()
-        | None    -> render (DrawBullet (BulletPositionOnTopOfShip theShip))
+        render (DrawShip(shipL, shipT))
+
+        match theShip.WeaponReloadStartTimeOpt with
+            | Some(_) -> ()
+            | None    -> render (DrawBullet (BulletPositionOnTopOfShip theShip))
 
     gameWorld.Bullets |> List.iter
         (fun bullet -> 

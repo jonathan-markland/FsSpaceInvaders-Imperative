@@ -127,10 +127,11 @@ type GameWorld =
 
 
 type Screen =
-    | WelcomeScreen  of hiScore:int
-    | GamePlayScreen of GameWorld
-    | LifeOverScreen of GameWorld
-    | GameOverScreen of hiScore:int
+    | WelcomeScreen   of hiScore:int
+    | GamePlayScreen  of GameWorld
+    | LifeOverScreen  of GameWorld
+    | NextLevelScreen of GameWorld
+    | GameOverScreen  of hiScore:int
 
 
 

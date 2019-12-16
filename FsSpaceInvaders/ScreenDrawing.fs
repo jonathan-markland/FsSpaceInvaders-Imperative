@@ -23,6 +23,14 @@ let RenderGamePlayScreen render (gameWorld:GameWorld) =
 
 
 
+let RenderNextLevelScreen render =
+    let text x top message alignment =  // TODO: Move out?
+        render (DrawText (x, top, message, alignment))
+    render (NextLevelBackground)
+    text   (ScreenWidth / 2) (ScreenHeight / 2) "NEXT LEVEL   WELL DONE" CentreAlign  // TODO: Text not vertically centred in the screen.
+    
+
+
 let RenderLifeOverScreen render =
     let text x top message alignment =  // TODO: Move out?
         render (DrawText (x, top, message, alignment))
@@ -43,6 +51,7 @@ let RenderScreen render screen =
     match screen with
         | WelcomeScreen(_)          -> RenderWelcomeScreen render
         | GamePlayScreen(gameWorld) -> RenderGamePlayScreen render gameWorld
+        | NextLevelScreen(_)        -> RenderNextLevelScreen render
         | LifeOverScreen(_)         -> RenderLifeOverScreen render
         | GameOverScreen(_)         -> RenderGameOverScreen render
 
