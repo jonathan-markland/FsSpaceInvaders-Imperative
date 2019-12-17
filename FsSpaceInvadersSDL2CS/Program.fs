@@ -1,9 +1,7 @@
 ﻿open SDL2
 open System.IO
 open SDLCover
-open GamePlay
 open GamePlayTypes
-open GameDrawing
 open DrawingCommands
 open Rules
 open Mechanics
