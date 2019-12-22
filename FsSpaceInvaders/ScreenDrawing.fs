@@ -8,13 +8,15 @@ open GamePlayTypes
 
 
 
+let private text x top message alignment =
+    DrawText (x, top, message, alignment)    // TODO: Text not vertically centred in the screen.
+
+
+
 let RenderWelcomeScreen render =
-    let text x top message alignment =  // TODO: Move out?
-        render (DrawText (x, top, message, alignment))
     render (TitleBackground)
-    text   (ScreenWidth / 2) (ScreenHeight / 2) "SPACE INVADERS" CentreAlign  // TODO: Text not vertically centred in the screen.
-    let y = (ScreenHeight * 6) / 7
-    text   (ScreenWidth / 2) y "PRESS FIRE TO PLAY" CentreAlign  // TODO: Text not vertically centred in the screen.
+    render (text (ScreenWidth / 2) (ScreenHeight / 2)       "SPACE INVADERS"     CentreAlign)
+    render (text (ScreenWidth / 2) ((ScreenHeight * 6) / 7) "PRESS FIRE TO PLAY" CentreAlign)
 
 
 
@@ -24,26 +26,20 @@ let RenderGamePlayScreen render (gameWorld:GameWorld) =
 
 
 let RenderNextLevelScreen render =
-    let text x top message alignment =  // TODO: Move out?
-        render (DrawText (x, top, message, alignment))
     render (NextLevelBackground)
-    text   (ScreenWidth / 2) (ScreenHeight / 2) "NEXT LEVEL   WELL DONE" CentreAlign  // TODO: Text not vertically centred in the screen.
+    render (text (ScreenWidth / 2) (ScreenHeight / 2) "NEXT LEVEL   WELL DONE" CentreAlign)
     
 
 
 let RenderLifeOverScreen render =
-    let text x top message alignment =  // TODO: Move out?
-        render (DrawText (x, top, message, alignment))
     render (LifeOverBackground)
-    text   (ScreenWidth / 2) (ScreenHeight / 2) "SHIP DESTROYED" CentreAlign  // TODO: Text not vertically centred in the screen.
+    render (text (ScreenWidth / 2) (ScreenHeight / 2) "SHIP DESTROYED" CentreAlign)
 
 
 
 let RenderGameOverScreen render =
-    let text x top message alignment =  // TODO: Move out?
-        render (DrawText (x, top, message, alignment))
     render (GameOverBackground)
-    text   (ScreenWidth / 2) (ScreenHeight / 2) "GAME OVER" CentreAlign  // TODO: Text not vertically centred in the screen.
+    render (text (ScreenWidth / 2) (ScreenHeight / 2) "GAME OVER" CentreAlign)
 
 
 
