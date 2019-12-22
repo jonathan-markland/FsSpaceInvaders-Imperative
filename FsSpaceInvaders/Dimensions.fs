@@ -7,8 +7,8 @@ let ScreenHeight         = 256<wu>
 
 let CharBlock            = 8<wu>
 
-let ScoreboardCharWidth  = 16<wu>
-let ScoreboardCharHeight = 8<wu>
+let ScoreboardCharWidth  = 16<wu>   // TODO: use these?
+let ScoreboardCharHeight = 8<wu>    // TODO: use these?
 
 let MothershipWidth      = 32<wu>
 let MothershipHeight     = 8<wu>

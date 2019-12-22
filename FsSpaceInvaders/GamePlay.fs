@@ -232,12 +232,12 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
         let WhereBulletStillBelowTopmostPosition bullet =
             bullet.BulletExtents.TopW > BulletEndY
 
-        let bulletsStillLive = 
+        let bulletsStillInPlay = 
             world.Bullets |> List.filter WhereBulletStillBelowTopmostPosition   // TODO: optimise for case where all are on screen still
 
-        bulletsStillLive |> List.iter ApplyUpwardMovementToBullet
+        bulletsStillInPlay |> List.iter ApplyUpwardMovementToBullet
 
-        world.Bullets <- bulletsStillLive
+        world.Bullets <- bulletsStillInPlay
 
     let UpdateBombs () =
 
@@ -246,20 +246,20 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
             let ApplyDownwardMovementToBomb b =
                 b.BombExtents <- b.BombExtents |> RectangleShuntedBy 0<wu> 1<wu>
 
-            let WhereBombStillAboveFloorPosition bullet =
-                bullet.BombExtents.BottomW < BombFloorY
+            let WhereBombStillAboveFloorPosition bomb =
+                bomb.BombExtents.BottomW < BombFloorY
 
-            let bombsStillAlive = 
+            let bombsStillInPlay = 
                 world.Bombs |> List.filter WhereBombStillAboveFloorPosition   // TODO: optimise for case where all are on screen still
 
-            bombsStillAlive |> List.iter ApplyDownwardMovementToBomb
+            bombsStillInPlay |> List.iter ApplyDownwardMovementToBomb
 
-            world.Bombs <- bombsStillAlive
+            world.Bombs <- bombsStillInPlay
         )
 
-    let ExplosionsForAll listOfThings areaOfThing worldExplosions =
+    let WithAdditionalExplosionsFor listOfThings areaOfThing preExistingExplosions =
 
-        worldExplosions |> List.append
+        preExistingExplosions |> List.append
 
             (listOfThings |> List.map (fun t ->
                 {
@@ -271,8 +271,8 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
     let ConsiderShotInvaders () =
 
         let deadBullets,deadInvaders = 
-            CollisionsBetween 
-                (world.Bullets |> WithAreasObtainedBy AreaOfBullet)
+            CollisionsBetweenLists 
+                (world.Bullets  |> WithAreasObtainedBy AreaOfBullet)
                 (world.Invaders |> WithAreasObtainedBy AreaOfInvader)
 
         let scoreIncrease = (List.length deadInvaders) * ScoreForKillingInvader
@@ -281,11 +281,11 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
         let survingBullets = world.Bullets |> List.filter (NotInList deadBullets AreaOfBullet)  // TODO: Prepare to return same list favouring no removals
 
-        let sumTotalExplosions = ExplosionsForAll deadInvaders AreaOfInvader world.Explosions
+        let newExplosionsState = world.Explosions |> WithAdditionalExplosionsFor deadInvaders AreaOfInvader 
 
         world.Bullets <- survingBullets
         world.Invaders <- survingInvaders
-        world.Explosions <- sumTotalExplosions
+        world.Explosions <- newExplosionsState
         IncreaseScoreBy scoreIncrease
 
     let ConsiderShotMothership () =
@@ -293,7 +293,7 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
         // TODO: Performance optimise:  Don't do any of this if no motherships (a common case)
 
         let deadBullets,deadMotherships = 
-            CollisionsBetween 
+            CollisionsBetweenLists 
                 (world.Bullets |> WithAreasObtainedBy AreaOfBullet)
                 (world.Motherships |> WithAreasObtainedBy AreaOfMothership)
 
@@ -303,7 +303,7 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
         let survingBullets = world.Bullets |> List.filter (NotInList deadBullets AreaOfBullet)  // TODO: Prepare to return same list favouring no removals
 
-        let sumTotalExplosions = ExplosionsForAll deadMotherships AreaOfMothership world.Explosions
+        let sumTotalExplosions = world.Explosions |> WithAdditionalExplosionsFor deadMotherships AreaOfMothership
 
         world.Bullets <- survingBullets
         world.Motherships <- survingMotherships

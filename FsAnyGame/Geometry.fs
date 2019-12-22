@@ -91,18 +91,16 @@ let HasListMemberThatIntersectsWith areaOfInstance regionObjectList =
 
 
 
-let CollisionsBetween objectListA objectListB =
+let CollisionsBetweenLists xs ys =
     
-    let { RegionObjectsList = aList ; RegionObjectItemAreaGetter = getAreaOfA } = objectListA
-    let { RegionObjectsList = bList ; RegionObjectItemAreaGetter = getAreaOfB } = objectListB
+    let { RegionObjectsList = xs' ; RegionObjectItemAreaGetter = areaOfX } = xs
+    let { RegionObjectsList = ys' ; RegionObjectItemAreaGetter = areaOfY } = ys
 
-    let intersectingAs = aList |> List.filter (fun a -> 
-        let aArea = a |> getAreaOfA
-        objectListB |> HasListMemberThatIntersectsWith aArea)
+    let intersectingXs = xs' |> List.filter (fun (x:'x) -> 
+        ys |> HasListMemberThatIntersectsWith (areaOfX x))
 
-    let intersectingBs = bList |> List.filter (fun b -> 
-        let bArea = b |> getAreaOfB
-        objectListA |> HasListMemberThatIntersectsWith bArea)
+    let intersectingYs = ys' |> List.filter (fun (y:'y) -> 
+        xs |> HasListMemberThatIntersectsWith (areaOfY y))
 
-    intersectingAs , intersectingBs
+    intersectingXs , intersectingYs
 
