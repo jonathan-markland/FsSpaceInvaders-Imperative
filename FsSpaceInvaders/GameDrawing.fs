@@ -18,6 +18,7 @@ let RenderGameWorld render (gameWorld:GameWorld) =
 
         (bleft,btop)
 
+
     render (GameplayBackground)
 
     gameWorld.Motherships |> List.iter 
