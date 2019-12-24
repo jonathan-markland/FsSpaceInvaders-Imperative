@@ -17,7 +17,6 @@
     <Compile Include="GameDrawing.fs" />
     <Compile Include="Screens.fs" />
     <Compile Include="ScreenDrawing.fs" />
-    <None Include="App.config" />
   </ItemGroup>
 
   <ItemGroup>
