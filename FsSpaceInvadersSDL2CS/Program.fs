@@ -1,6 +1,4 @@
-﻿module Program
-
-open SDL2
+﻿open SDL2
 open System.IO
 open SDLCover
 open GamePlayTypes
