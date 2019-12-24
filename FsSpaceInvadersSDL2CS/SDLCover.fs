@@ -199,7 +199,7 @@ let DrawTextString targetSurface x top message textAlign (fontDefinition:FontDef
 let WithSdl2Do f =
     try
         let initResult = SDL.SDL_Init(SDL.SDL_INIT_TIMER)
-        if initResult <> 0 then
+        if initResult = 0 then
             Some(f ())
         else
             None
