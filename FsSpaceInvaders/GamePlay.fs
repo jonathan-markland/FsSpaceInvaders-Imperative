@@ -324,12 +324,12 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
     let MoveInvaders () =
     
-        let (TickCount(ticks)) = timeNow
+        let (TickCount(ticks)) = timeNow   // TODO: Measure from the start of the screen?
         if ticks &&& 7u = 0u then
-            let ticks = ticks / 8u
 
-            let dx = if (ticks &&& 16u) = 0u then 1<wu> else -1<wu>
-            let dy = if (ticks &&& 31u) = 0u then 1<wu> else 0<wu>
+            let ticks = ticks / 8u
+            let dx = if (ticks &&& 16u)  = 0u then 1<wu> else -1<wu>   // TODO:  Use % with tunable constants
+            let dy = if (ticks &&& 255u) = 0u then 8<wu> else 0<wu>    // TODO:  Use % with tunable constants
 
             world.Invaders |> List.iter (fun invader ->
                 let old = invader.InvaderExtents
