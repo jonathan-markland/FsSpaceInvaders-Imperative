@@ -11,6 +11,10 @@ open Dimensions
 open Scoring
 open Rates
 
+// TODO:  Speed up as number of invaders reduces.
+// TODO:  Invader step downwards should be larger.  Timing of their advance needs revisiting.
+// TODO:  How could we change the game each level?
+
 
 
 let NewInvaderPack () =
