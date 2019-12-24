@@ -18,7 +18,6 @@
     <Compile Include="Screens.fs" />
     <Compile Include="ScreenDrawing.fs" />
     <None Include="App.config" />
-    <Content Include="packages.config" />
   </ItemGroup>
 
   <ItemGroup>

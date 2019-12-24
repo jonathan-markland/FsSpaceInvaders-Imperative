@@ -5,7 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="packages.config" />
     <Compile Include="Fonts.fs" />
     <Compile Include="Mechanics.fs" />
     <Compile Include="Geometry.fs" />
