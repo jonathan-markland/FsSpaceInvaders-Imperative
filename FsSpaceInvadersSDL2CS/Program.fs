@@ -1,4 +1,6 @@
-﻿open SDL2
+﻿module Program
+
+open SDL2
 open System.IO
 open SDLCover
 open GamePlayTypes
@@ -116,12 +118,7 @@ let TimerCallback (interval:uint32) (param:nativeint) : uint32 =
 
 
 
-[<EntryPoint>]
-let main argv =
-
-    let initResult = SDL.SDL_Init(SDL.SDL_INIT_TIMER)
-    if initResult <> 0 then
-        failwith "Failed to initialise SDL."
+let GameMain () =
 
     let imageSet = LoadSpaceInvadersImages ""
     let fontDefinition = MakeFont imageSet.Font.ImageHandle
@@ -197,4 +194,18 @@ let main argv =
 
         | Ok(_) ->
             0
+
+
+
+
+[<EntryPoint>]
+let main argv =
+    match WithSdl2Do GameMain with
+        | None -> 
+            printfn "Failed to start SDL2 library."
+            0
+        | Some(n) -> n
+
+
+ 
 

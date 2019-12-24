@@ -35,6 +35,12 @@ open SDL2
 open Fonts
 
 
+
+
+
+
+
+
 let ToSdlRect x y w h =
     let mutable r = SDL.SDL_Rect()
     r.x <- x
@@ -187,3 +193,17 @@ let DrawTextString targetSurface x top message textAlign (fontDefinition:FontDef
         else ()
         posx <- posx + cwd
     )
+
+
+
+let WithSdl2Do f =
+    try
+        let initResult = SDL.SDL_Init(SDL.SDL_INIT_TIMER)
+        if initResult <> 0 then
+            Some(f ())
+        else
+            None
+    with 
+        | :? System.BadImageFormatException ->
+            None
+    
