@@ -52,7 +52,7 @@ let ToSdlRect x y w h =
 
 
 [<Struct>]
-type BMPImage =
+type BMPImage =  // TODO: rename BMPNativeHandle
     {
         BMPHandle: nativeint
     }

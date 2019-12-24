@@ -9,6 +9,9 @@
   <ItemGroup>
     <Compile Include="SDLCover.fs" />
     <None Include="App.config" />
+    <Content Include="Images\Explosion.bmp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Images\BlueInvader.bmp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

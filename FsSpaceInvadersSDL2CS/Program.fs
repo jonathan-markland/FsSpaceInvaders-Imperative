@@ -20,9 +20,10 @@ type SpaceInvadersBMPs =
         Bomb:        BMPSourceImage
         Mothership:  BMPSourceImage
         Font:        BMPSourceImage
+        Explosion:   BMPSourceImage
     }
-    
-
+  
+  
 
 let LoadSpaceInvadersImages rootPath =
 
@@ -39,7 +40,9 @@ let LoadSpaceInvadersImages rootPath =
         Bomb        = fromFile "Bomb"
         Mothership  = fromFile "Mothership"
         Font        = fromFile "Font"
+        Explosion   = fromFile "Explosion"
     }
+
 
 
 /// Render game drawing command to the screen.
@@ -72,13 +75,17 @@ let RenderToSdlSurface imageSet fontDefinition targetSurface drawingCommand =
             DrawImage targetSurface imageSet.Ship (px left) (px top)
 
         | DrawExplosion(e) ->
-            DrawFilledRectangle  // TODO:  Provide an explosion graphic / animation based on elapsed time.
-                targetSurface 
-                (px e.ExplosionExtents.LeftW) 
-                (px e.ExplosionExtents.TopW) 
-                (px e.ExplosionExtents.RightW) 
-                (px e.ExplosionExtents.BottomW) 
-                0xFFFF00u
+            let w = imageSet.Explosion.SourceRect.w
+            let h = imageSet.Explosion.SourceRect.h
+            let dstx = (px e.ExplosionExtents.LeftW) 
+            let dsty = (px e.ExplosionExtents.TopW) 
+            let dstw = (px e.ExplosionExtents.RightW) - dstx 
+            let dsth = (px e.ExplosionExtents.BottomW) - dsty 
+            DrawSubImage 
+                targetSurface
+                imageSet.Explosion.ImageHandle
+                0 0 w h
+                dstx dsty dstw dsth
 
         | DrawText(x,top,message,textAlign) ->
             DrawTextString targetSurface (px x) (px top) message textAlign fontDefinition
