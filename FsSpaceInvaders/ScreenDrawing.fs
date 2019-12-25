@@ -20,7 +20,7 @@ let RenderWelcomeScreen render =
 
 
 
-let RenderGamePlayScreen render (gameWorld:GameWorld) =
+let RenderGamePlayScreen render gameWorld =
     RenderGameWorld render gameWorld
 
 
