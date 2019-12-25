@@ -1,4 +1,5 @@
 ﻿module Scoring
 
-let ScoreForKillingInvader = 10
-let ScoreForKillingMothership = 250
+let ScoreForKillingInvader    = 10u
+let ScoreForKillingMothership = 250u
+let ScoreForNextLevel         = 1000u

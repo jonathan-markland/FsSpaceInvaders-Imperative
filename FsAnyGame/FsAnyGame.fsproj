@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="ScoreHiScore.fs" />
     <Compile Include="Fonts.fs" />
     <Compile Include="Mechanics.fs" />
     <Compile Include="Geometry.fs" />

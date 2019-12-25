@@ -10,6 +10,7 @@ open ScreenLayout
 open Dimensions
 open Scoring
 open Rates
+open ScoreHiScore
 
 // TODO:  Speed up as number of invaders reduces.
 // TODO:  Invader step downwards should be larger.  Timing of their advance needs revisiting.
@@ -68,9 +69,8 @@ let NewGameWorld score hiScore lives level (timeNow:TickCount) : GameWorld =
 
         PlayStats =
             {
-                HiScore = hiScore
                 Level   = level
-                Score   = score
+                ScoreAndHiScore = { Score=score ; HiScore=hiScore }
                 Lives   = lives
             }
 
@@ -93,7 +93,7 @@ let NextLifeGameWorld (outgoing:GameWorld) : GameWorld =
 
     {
         GameStartTime = outgoing.GameStartTime
-        PlayStats     = { oldStats with Lives = oldStats.Lives - 1 }
+        PlayStats     = { oldStats with Lives = oldStats.Lives - 1u }
         Motherships   = outgoing.Motherships
         Invaders      = outgoing.Invaders
         Bullets       = []
@@ -109,11 +109,12 @@ let NextLifeGameWorld (outgoing:GameWorld) : GameWorld =
 /// return a new world for the next level.
 let NextLevelGameWorld (outgoing:GameWorld) : GameWorld =
 
-    let oldStats = outgoing.PlayStats
+    let oldStats   = outgoing.PlayStats
+    let newScoring = oldStats.ScoreAndHiScore |> IncrementScoreBy ScoreForNextLevel
 
     {
         GameStartTime = outgoing.GameStartTime
-        PlayStats     = { oldStats with Lives = oldStats.Lives + 1 ; Level = oldStats.Level + 1 }
+        PlayStats     = { oldStats with Lives = oldStats.Lives + 1u ; Level = oldStats.Level + 1u ; ScoreAndHiScore = newScoring }
         Motherships   = []
         Invaders      = NewInvaderPack ()
         Bullets       = []
@@ -182,9 +183,8 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
     let IncreaseScoreBy n =
 
-        world.PlayStats.Score <- world.PlayStats.Score + n
-        if world.PlayStats.Score > world.PlayStats.HiScore then
-            world.PlayStats.HiScore <- world.PlayStats.Score
+        let newValue = world.PlayStats.ScoreAndHiScore |> IncrementScoreBy n
+        world.PlayStats.ScoreAndHiScore <- newValue
 
     let MoveShip () =
 
@@ -279,7 +279,7 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
                 (world.Bullets  |> WithAreasObtainedBy AreaOfBullet)
                 (world.Invaders |> WithAreasObtainedBy AreaOfInvader)
 
-        let scoreIncrease = (List.length deadInvaders) * ScoreForKillingInvader
+        let scoreIncrease = uint32 (List.length deadInvaders) * ScoreForKillingInvader
 
         let survingInvaders = world.Invaders |> List.filter (NotInList deadInvaders DogTagOfInvader)  // TODO: Prepare to return same list favouring no removals
 
@@ -301,7 +301,7 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
                 (world.Bullets |> WithAreasObtainedBy AreaOfBullet)
                 (world.Motherships |> WithAreasObtainedBy AreaOfMothership)
 
-        let scoreIncrease = (List.length deadMotherships) * ScoreForKillingMothership
+        let scoreIncrease = uint32 (List.length deadMotherships) * ScoreForKillingMothership
 
         let survingMotherships = world.Motherships |> List.filter (NotInList deadMotherships AreaOfMothership)  // TODO: Prepare to return same list favouring no removals
 

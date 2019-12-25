@@ -3,14 +3,14 @@
 open Geometry
 open Mechanics
 open Dimensions
+open ScoreHiScore
 
 
 type GamePlayStats =
     {
-        mutable HiScore: int
-        mutable Level:   int
-        mutable Score:   int
-        mutable Lives:   int
+        mutable Level:             uint32
+        mutable ScoreAndHiScore:   ScoreAndHiScore
+        mutable Lives:             uint32
     }
 
 
@@ -127,11 +127,11 @@ type GameWorld =
 
 
 type Screen =
-    | WelcomeScreen   of hiScore:int
+    | WelcomeScreen   of hiScore:uint32
     | GamePlayScreen  of GameWorld
     | LifeOverScreen  of GameWorld
     | NextLevelScreen of GameWorld
-    | GameOverScreen  of hiScore:int
+    | GameOverScreen  of hiScore:uint32
 
 
 

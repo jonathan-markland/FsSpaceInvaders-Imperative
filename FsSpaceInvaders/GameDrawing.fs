@@ -5,6 +5,7 @@ open ScreenLayout
 open Dimensions
 open DrawingCommands
 open Fonts
+open ScoreHiScore
 
 let RenderGameWorld render (gameWorld:GameWorld) =
 
@@ -69,7 +70,7 @@ let RenderGameWorld render (gameWorld:GameWorld) =
     let text x top message alignment =
         render (DrawText (x, top, message, alignment))
 
-    let number x top (value:int) alignment =
+    let number x top (value:uint32) alignment =
         let s = value.ToString()
         render (DrawText (x, top, s, alignment))
 
@@ -83,8 +84,10 @@ let RenderGameWorld render (gameWorld:GameWorld) =
     text   HeadingLevelX   ScoreboardTitlesTopY "LEVEL"   HeadingAlignmentLevel  
     text   HeadingLivesX   ScoreboardTitlesTopY "LIVES"   HeadingAlignmentLives  
 
-    number HeadingScoreX   ScoreboardValuesTopY gameWorld.PlayStats.Score   HeadingAlignmentScore  
-    number HeadingHiScoreX ScoreboardValuesTopY gameWorld.PlayStats.HiScore HeadingAlignmentHiScore
+    let { Score=score ; HiScore=hiScore } = gameWorld.PlayStats.ScoreAndHiScore
+
+    number HeadingScoreX   ScoreboardValuesTopY score   HeadingAlignmentScore  
+    number HeadingHiScoreX ScoreboardValuesTopY hiScore HeadingAlignmentHiScore
     number HeadingLevelX   ScoreboardValuesTopY gameWorld.PlayStats.Level   HeadingAlignmentLevel  
     number HeadingLivesX   ScoreboardValuesTopY gameWorld.PlayStats.Lives   HeadingAlignmentLives  
 

@@ -13,7 +13,7 @@ let CalculateNextScreenState (currentState:Screen) (input:InputEventData) (timeN
         
         | WelcomeScreen(lastHiScore) ->
             if input.FireJustPressed then
-                GamePlayScreen (NewGameWorld 0 lastHiScore 3 1 timeNow)
+                GamePlayScreen (NewGameWorld 0u lastHiScore 3u 1u timeNow)
             else
                 currentState
 
@@ -22,10 +22,10 @@ let CalculateNextScreenState (currentState:Screen) (input:InputEventData) (timeN
                 | GameContinuing -> currentState
                 | PlayerWon      -> NextLevelScreen(world)
                 | PlayerLost     -> 
-                    if world.PlayStats.Lives > 0 then
+                    if world.PlayStats.Lives > 0u then
                         LifeOverScreen(world)
                     else
-                        GameOverScreen(world.PlayStats.HiScore)
+                        GameOverScreen(world.PlayStats.ScoreAndHiScore.HiScore)
 
         | NextLevelScreen(world) ->
             if input.FireJustPressed then
@@ -48,5 +48,5 @@ let CalculateNextScreenState (currentState:Screen) (input:InputEventData) (timeN
 
 
 let CompletelyNewGameStateWithResetHiScore () =
-    let initialHiScore = 500
+    let initialHiScore = 500u
     WelcomeScreen(initialHiScore)
