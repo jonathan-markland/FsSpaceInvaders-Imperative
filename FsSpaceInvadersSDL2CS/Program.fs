@@ -89,7 +89,7 @@ let RenderToSdl imageSet fontDefinition renderer drawingCommand =
             let dsth = (px e.ExplosionExtents.BottomW) - dsty 
             DrawSubImage 
                 renderer
-                imageSet.Explosion.ImageHandle
+                imageSet.Explosion.TextureHandle
                 0 0 w h
                 dstx dsty dstw dsth
 
@@ -170,71 +170,72 @@ let GameMain () =
     // TODO:  Minor: We don't actually free the imageSet handles.
 
     match CreateWindowAndRenderer 256 256 with   // TODO: constants
-
         | Some(mainWindow, renderer) ->
-
             let imageSet = LoadSpaceInvadersImages renderer ""
-            let fontDefinition = MakeFont imageSet.Font.ImageHandle
-            let mutable screenState = CompletelyNewGameStateWithResetHiScore ()
+            match MakeFontFromBMP renderer imageSet.Font.ImageHandle with
+                | None -> 
+                    0
+                | Some(fontDefinition) ->
+                    let mutable screenState = CompletelyNewGameStateWithResetHiScore ()
  
-            let timerID = 
-                SDL.SDL_AddTimer(15u,new SDL.SDL_TimerCallback(TimerCallback),0n)
+                    let timerID = 
+                        SDL.SDL_AddTimer(15u,new SDL.SDL_TimerCallback(TimerCallback),0n)
             
-            if timerID = 0 then
-                failwith "Failed to install the gameplay timer."
+                    if timerID = 0 then
+                        failwith "Failed to install the gameplay timer."
 
-            let renderFunction = (RenderToSdl imageSet fontDefinition renderer)
+                    let renderFunction = (RenderToSdl imageSet fontDefinition renderer)
 
-            let mutable leftHeld = false
-            let mutable rightHeld = false
-            let mutable tickCount = 0u
+                    let mutable leftHeld = false
+                    let mutable rightHeld = false
+                    let mutable tickCount = 0u
 
-            let mutable fireJustPressed = false  // until discovered otherwise
-            let mutable fireWaitingRelease = false
+                    let mutable fireJustPressed = false  // until discovered otherwise
+                    let mutable fireWaitingRelease = false
 
-            let mutable stop = false // TODO: hack
+                    let mutable stop = false // TODO: hack
 
-            let mutable quit = false
-            while quit = false do
+                    let mutable quit = false
+                    while quit = false do
 
-                let mutable event = new SDL.SDL_Event ()
+                        let mutable event = new SDL.SDL_Event ()
 
-                while (SDL.SDL_WaitEvent (&event)) <> 0 && not quit do   // SDL_PollEvent
+                        while (SDL.SDL_WaitEvent (&event)) <> 0 && not quit do   // SDL_PollEvent
 
-                    let msg = event.``type``
+                            let msg = event.``type``
 
-                    if msg = SDL.SDL_EventType.SDL_QUIT then 
-                        quit <- true
+                            if msg = SDL.SDL_EventType.SDL_QUIT then 
+                                quit <- true
 
-                    else if msg = SDL.SDL_EventType.SDL_KEYDOWN then
-                        match event.key.keysym.scancode with
-                            | SDL.SDL_Scancode.SDL_SCANCODE_LEFT  -> leftHeld <- true
-                            | SDL.SDL_Scancode.SDL_SCANCODE_RIGHT -> rightHeld <- true
-                            | SDL.SDL_Scancode.SDL_SCANCODE_Z     -> 
-                                if fireWaitingRelease 
-                                then () 
-                                else 
-                                    fireJustPressed <- true
-                                    fireWaitingRelease <- true
-                            | _ -> ()
+                            else if msg = SDL.SDL_EventType.SDL_KEYDOWN then
+                                match event.key.keysym.scancode with
+                                    | SDL.SDL_Scancode.SDL_SCANCODE_LEFT  -> leftHeld <- true
+                                    | SDL.SDL_Scancode.SDL_SCANCODE_RIGHT -> rightHeld <- true
+                                    | SDL.SDL_Scancode.SDL_SCANCODE_Z     -> 
+                                        if fireWaitingRelease 
+                                        then () 
+                                        else 
+                                            fireJustPressed <- true
+                                            fireWaitingRelease <- true
+                                    | _ -> ()
 
-                    else if msg = SDL.SDL_EventType.SDL_KEYUP then
-                        match event.key.keysym.scancode with
-                            | SDL.SDL_Scancode.SDL_SCANCODE_LEFT  -> leftHeld <- false
-                            | SDL.SDL_Scancode.SDL_SCANCODE_RIGHT -> rightHeld <- false
-                            | SDL.SDL_Scancode.SDL_SCANCODE_Z     -> fireWaitingRelease <- false
-                            | _ -> ()
+                            else if msg = SDL.SDL_EventType.SDL_KEYUP then
+                                match event.key.keysym.scancode with
+                                    | SDL.SDL_Scancode.SDL_SCANCODE_LEFT  -> leftHeld <- false
+                                    | SDL.SDL_Scancode.SDL_SCANCODE_RIGHT -> rightHeld <- false
+                                    | SDL.SDL_Scancode.SDL_SCANCODE_Z     -> fireWaitingRelease <- false
+                                    | _ -> ()
 
-                    else if msg = SDL.SDL_EventType.SDL_USEREVENT then
-                        // ~ This is the AddTimer event handler 
-                        tickCount <- tickCount + 1u
-                        let inputEventData = { LeftHeld=leftHeld ; RightHeld=rightHeld ; FireJustPressed=fireJustPressed }
-                        let nextState = CalculateNextScreenState screenState inputEventData (TickCount(tickCount))
-                        RenderScreen renderFunction nextState
-                        Present renderer
-                        fireJustPressed <- false
-                        screenState <- nextState
-            1
+                            else if msg = SDL.SDL_EventType.SDL_USEREVENT then
+                                // ~ This is the AddTimer event handler 
+                                tickCount <- tickCount + 1u
+                                let inputEventData = { LeftHeld=leftHeld ; RightHeld=rightHeld ; FireJustPressed=fireJustPressed }
+                                let nextState = CalculateNextScreenState screenState inputEventData (TickCount(tickCount))
+                                RenderScreen renderFunction nextState
+                                Present renderer
+                                fireJustPressed <- false
+                                screenState <- nextState
+                    1
 
         | None ->
             0
@@ -261,7 +262,7 @@ let GameMain () =
 let main argv =
     match WithSdl2Do (*SpikeSdlRendererMain*) GameMain with
         | None -> 
-            printfn "Failed to start SDL2 library."
+            printfn "Failed to start SDL2 library."   // TODO: Let's not use the STDOUT.
             0
         | Some(n) -> n
 

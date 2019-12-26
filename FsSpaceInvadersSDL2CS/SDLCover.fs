@@ -133,17 +133,24 @@ let BMPImagePreparedForRenderer rendererNativeInt { BMPNativeInt = bmp } =
 type FontDefinition =
     {
         FontImageHandle:  BMPNativeInt
+        TextureNativeInt: TextureNativeInt
         CharWidth:        int
         CharHeight:       int
     }
 
 
-let MakeFont bmpImage =
-    {
-        FontImageHandle = bmpImage
-        CharWidth  = 6  // TODO
-        CharHeight = 8  // TODO
-    }
+let MakeFontFromBMP { RendererNativeInt=renderer } { BMPNativeInt=bmp } =
+
+    let texture = SDL.SDL_CreateTextureFromSurface(renderer,bmp)
+    if texture <> 0n then
+        Some({
+            FontImageHandle   = { BMPNativeInt=bmp }
+            TextureNativeInt  = { TextureNativeInt=texture }
+            CharWidth  = 6  // TODO
+            CharHeight = 8  // TODO
+        })
+    else
+        None
 
 
 
@@ -194,11 +201,11 @@ let DrawImage {RendererNativeInt=renderer} (image:BMPSourceImage) left top =
     SDL.SDL_RenderCopy(renderer, image.TextureHandle.TextureNativeInt, &srcRect, &dstRect) |> ignore
 
 /// Draw part of a BMPImage onto a surface at a given position.
-let DrawSubImage {RendererNativeInt=renderer} (imageHandle:BMPNativeInt) srcleft srctop srcwidth srcheight dstleft dsttop dstwidth dstheight =
+let DrawSubImage {RendererNativeInt=renderer} (texture:TextureNativeInt) srcleft srctop srcwidth srcheight dstleft dsttop dstwidth dstheight =
     let mutable dstRect = ToSdlRect dstleft dsttop dstwidth dstheight
     let mutable srcRect = ToSdlRect srcleft srctop srcwidth srcheight
     // SDL.SDL_BlitSurface (imageHandle.BMPNativeInt, &srcRect, screenSurface, &dstRect) |> ignore
-    SDL.SDL_RenderCopy(renderer, imageHandle.BMPNativeInt, &srcRect, &dstRect) |> ignore
+    SDL.SDL_RenderCopy(renderer, texture.TextureNativeInt, &srcRect, &dstRect) |> ignore
 
 /// Draw a filled rectangle onto the surface at given position in given colour
 let DrawFilledRectangle {RendererNativeInt=renderer} left top right bottom (colourRGB:uint32) =
@@ -215,12 +222,12 @@ let DrawFilledRectangle {RendererNativeInt=renderer} left top right bottom (colo
 /// Draw text at given position in given font, with given alignment.
 let DrawTextString renderer x top message textAlign (fontDefinition:FontDefinition) =
 
-    let cwd = fontDefinition.CharWidth
-    let cht = fontDefinition.CharHeight
-    let bmp = fontDefinition.FontImageHandle
+    let chWidth  = fontDefinition.CharWidth
+    let chHeight = fontDefinition.CharHeight
+    let texture  = fontDefinition.TextureNativeInt
 
     let measuredWidth (s:string) =
-        s.Length * cwd
+        s.Length * chWidth
 
     let mutable posx =
         match textAlign with
@@ -229,12 +236,12 @@ let DrawTextString renderer x top message textAlign (fontDefinition:FontDefiniti
             | RightAlign  -> x - (message |> measuredWidth)
 
     message |> Seq.iter (fun ch -> 
-        let write charIndex = DrawSubImage renderer bmp  (charIndex * cwd) 0 cwd cht  posx top cwd cht
+        let write charIndex = DrawSubImage renderer texture  (charIndex * chWidth) 0 chWidth chHeight  posx top chWidth chHeight
         if      ch >= '0' && ch <= '9' then write ((int ch) - 48)
         else if ch >= 'A' && ch <= 'Z' then write ((int ch) - 55)
         else if ch >= 'a' && ch <= 'z' then write ((int ch) - 87)
         else ()
-        posx <- posx + cwd
+        posx <- posx + chWidth
     )
 
 
