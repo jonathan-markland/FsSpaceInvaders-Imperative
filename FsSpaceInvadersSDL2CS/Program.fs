@@ -171,7 +171,13 @@ let GameMain () =
 
     match CreateWindowAndRenderer 256 256 with   // TODO: constants
         | Some(mainWindow, renderer) ->
+
+            let backingTexture = { TextureNativeInt = SDL.SDL_CreateTexture(renderer.RendererNativeInt, SDL.SDL_PIXELFORMAT_RGBA8888, int SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, 256, 256) }
+            if backingTexture.TextureNativeInt = 0n then
+                failwith "" // TODO: sort out
+
             let imageSet = LoadSpaceInvadersImages renderer ""
+
             match MakeFontFromBMP renderer imageSet.Font.ImageHandle with
                 | None -> 
                     0
@@ -231,7 +237,10 @@ let GameMain () =
                                 tickCount <- tickCount + 1u
                                 let inputEventData = { LeftHeld=leftHeld ; RightHeld=rightHeld ; FireJustPressed=fireJustPressed }
                                 let nextState = CalculateNextScreenState screenState inputEventData (TickCount(tickCount))
+                                SDL.SDL_SetRenderTarget(renderer.RendererNativeInt, backingTexture.TextureNativeInt) |> ignore
                                 RenderScreen renderFunction nextState
+                                SDL.SDL_SetRenderTarget(renderer.RendererNativeInt, 0n) |> ignore
+                                SDL.SDL_RenderCopy(renderer.RendererNativeInt, backingTexture.TextureNativeInt, 0n, 0n) |> ignore
                                 Present renderer
                                 fireJustPressed <- false
                                 screenState <- nextState
