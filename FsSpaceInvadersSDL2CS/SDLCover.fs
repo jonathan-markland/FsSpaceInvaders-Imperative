@@ -34,14 +34,60 @@ kovacsmarcell
 open SDL2
 open Fonts
 
+[<Struct>]
+type WindowNativeInt =
+    {
+        WindowNativeInt: nativeint
+    }
+
+[<Struct>]
+type BMPNativeInt =
+    {
+        BMPNativeInt: nativeint
+    }
+
+[<Struct>]
+type SurfaceNativeInt =
+    {
+        SurfaceNativeInt: nativeint
+    }
+
+[<Struct>]
+type TextureNativeInt =
+    {
+        TextureNativeInt: nativeint
+    }
+
+[<Struct>]
+type RendererNativeInt =
+    {
+        RendererNativeInt: nativeint
+    }
 
 
 
+let CreateWindowAndRenderer width height =
 
+    let mutable windowNativeInt = 0n
+    let mutable rendererNativeInt = 0n
+
+    let createWRResult =
+        SDL.SDL_CreateWindowAndRenderer(
+            width,
+            height,
+            SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE,
+            &windowNativeInt,
+            &rendererNativeInt)
+
+    if createWRResult = 0 then
+        Some({ WindowNativeInt=windowNativeInt } , { RendererNativeInt=rendererNativeInt })
+    else
+        None
 
 
 
 let ToSdlRect x y w h =
+
     let mutable r = SDL.SDL_Rect()
     r.x <- x
     r.y <- y
@@ -51,42 +97,42 @@ let ToSdlRect x y w h =
 
 
 
-[<Struct>]
-type BMPImage =  // TODO: rename BMPNativeHandle
-    {
-        BMPHandle: nativeint
-    }
-
 let LoadBMP filePath =
     let handle = SDL.SDL_LoadBMP(filePath)
     if handle = nativeint 0 then
         None
     else
-        Some({ BMPHandle = handle })
+        Some({ BMPNativeInt = handle })
 
 
 
 type BMPSourceImage =
     {
-        ImageHandle: BMPImage
-        SourceRect:  SDL.SDL_Rect
+        ImageHandle:   BMPNativeInt
+        TextureHandle: TextureNativeInt
+        SourceRect:    SDL.SDL_Rect
     }
 
-let WithDimensions {BMPHandle=surface} =
+let BMPImagePreparedForRenderer rendererNativeInt { BMPNativeInt = bmp } =
 
     let t = typeof<SDL.SDL_Surface>
-    let s = (System.Runtime.InteropServices.Marshal.PtrToStructure(surface, t)) :?> SDL.SDL_Surface
+    let s = (System.Runtime.InteropServices.Marshal.PtrToStructure(bmp, t)) :?> SDL.SDL_Surface
 
-    {
-        ImageHandle = { BMPHandle=surface }
-        SourceRect  = ToSdlRect 0 0 s.w s.h
-    }
+    let texture = SDL.SDL_CreateTextureFromSurface(rendererNativeInt,bmp)
+    if texture <> 0n then
+        Some({
+            ImageHandle   = { BMPNativeInt=bmp }
+            TextureHandle = { TextureNativeInt=texture }
+            SourceRect    = ToSdlRect 0 0 s.w s.h
+        })
+    else
+        None
 
 
 
 type FontDefinition =
     {
-        FontImageHandle:  BMPImage
+        FontImageHandle:  BMPNativeInt
         CharWidth:        int
         CharHeight:       int
     }
@@ -105,13 +151,7 @@ let MakeFont bmpImage =
 
 
 
-[<Struct>]
-type Window =
-    {
-        WindowHandle: nativeint
-    }
-
-let UpdateWindowSurface {WindowHandle=h} =
+let UpdateWindowSurface {WindowNativeInt=h} =
     SDL.SDL_UpdateWindowSurface h |> ignore
 
 let WithNewMainWindowDo windowTitleString windowWidth windowHeight operation =
@@ -127,7 +167,7 @@ let WithNewMainWindowDo windowTitleString windowWidth windowHeight operation =
         Error (sprintf "Window could not be created! SDL_Error: %s\n" (SDL.SDL_GetError ()))
     else
         try
-            let operationResult = operation {WindowHandle = window}
+            let operationResult = operation {WindowNativeInt = window}
             SDL.SDL_DestroyWindow(window)
             Ok (operationResult)
         with e ->
@@ -135,42 +175,45 @@ let WithNewMainWindowDo windowTitleString windowWidth windowHeight operation =
 
 
 
-[<Struct>]
-type Surface =
-    {
-        SurfaceHandle: nativeint
-    }
-
-let WithWindowSurfaceDo operation {WindowHandle=wh} =
+let WithWindowSurfaceDo operation {WindowNativeInt=wh} =
 
     let windowSurface = SDL.SDL_GetWindowSurface(wh)
 
     if windowSurface = 0n then
         Error (sprintf "Window surface could not be obtained! SDL_Error: %s\n" (SDL.SDL_GetError ()))
     else
-        Ok (operation {SurfaceHandle = windowSurface})
+        Ok (operation {SurfaceNativeInt = windowSurface})
 
 
 
 /// Draw a BMPSourceImage onto a surface at a given position.
-let DrawImage {SurfaceHandle=screenSurface} (image:BMPSourceImage) left top =
+let DrawImage {RendererNativeInt=renderer} (image:BMPSourceImage) left top =
     let mutable dstRect = ToSdlRect left top image.SourceRect.w image.SourceRect.h
     let mutable srcRect = image.SourceRect
-    SDL.SDL_BlitSurface (image.ImageHandle.BMPHandle, &srcRect, screenSurface, &dstRect) |> ignore
+    // SDL.SDL_BlitSurface (image.ImageHandle.BMPNativeInt, &srcRect, screenSurface, &dstRect) |> ignore
+    SDL.SDL_RenderCopy(renderer, image.TextureHandle.TextureNativeInt, &srcRect, &dstRect) |> ignore
 
 /// Draw part of a BMPImage onto a surface at a given position.
-let DrawSubImage {SurfaceHandle=screenSurface} (imageHandle:BMPImage) srcleft srctop srcwidth srcheight dstleft dsttop dstwidth dstheight =
+let DrawSubImage {RendererNativeInt=renderer} (imageHandle:BMPNativeInt) srcleft srctop srcwidth srcheight dstleft dsttop dstwidth dstheight =
     let mutable dstRect = ToSdlRect dstleft dsttop dstwidth dstheight
     let mutable srcRect = ToSdlRect srcleft srctop srcwidth srcheight
-    SDL.SDL_BlitSurface (imageHandle.BMPHandle, &srcRect, screenSurface, &dstRect) |> ignore
+    // SDL.SDL_BlitSurface (imageHandle.BMPNativeInt, &srcRect, screenSurface, &dstRect) |> ignore
+    SDL.SDL_RenderCopy(renderer, imageHandle.BMPNativeInt, &srcRect, &dstRect) |> ignore
 
 /// Draw a filled rectangle onto the surface at given position in given colour
-let DrawFilledRectangle {SurfaceHandle=screenSurface} left top right bottom fillColour =
+let DrawFilledRectangle {RendererNativeInt=renderer} left top right bottom (colourRGB:uint32) =
     let mutable rect = ToSdlRect left top (right-left) (bottom-top)
-    SDL.SDL_FillRect (screenSurface, &rect, fillColour) |> ignore
+    // SDL.SDL_FillRect (screenSurface, &rect, fillColour) |> ignore
+    SDL.SDL_SetRenderDrawColor(
+        renderer, 
+        uint8 (colourRGB >>> 16),
+        uint8 (colourRGB >>> 8),
+        uint8 colourRGB,
+        0xFFuy) |> ignore
+    SDL.SDL_RenderFillRect(renderer, &rect) |> ignore
 
 /// Draw text at given position in given font, with given alignment.
-let DrawTextString targetSurface x top message textAlign (fontDefinition:FontDefinition) =
+let DrawTextString renderer x top message textAlign (fontDefinition:FontDefinition) =
 
     let cwd = fontDefinition.CharWidth
     let cht = fontDefinition.CharHeight
@@ -186,7 +229,7 @@ let DrawTextString targetSurface x top message textAlign (fontDefinition:FontDef
             | RightAlign  -> x - (message |> measuredWidth)
 
     message |> Seq.iter (fun ch -> 
-        let write charIndex = DrawSubImage targetSurface bmp  (charIndex * cwd) 0 cwd cht  posx top cwd cht
+        let write charIndex = DrawSubImage renderer bmp  (charIndex * cwd) 0 cwd cht  posx top cwd cht
         if      ch >= '0' && ch <= '9' then write ((int ch) - 48)
         else if ch >= 'A' && ch <= 'Z' then write ((int ch) - 55)
         else if ch >= 'a' && ch <= 'z' then write ((int ch) - 87)
@@ -206,4 +249,11 @@ let WithSdl2Do f =
     with 
         | :? System.BadImageFormatException ->
             None
+
+
+
+let Present {RendererNativeInt=renderer} =
+    SDL.SDL_RenderPresent(renderer)
+
+
     

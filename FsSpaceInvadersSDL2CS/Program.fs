@@ -25,13 +25,19 @@ type SpaceInvadersBMPs =
   
   
 
-let LoadSpaceInvadersImages rootPath =
+let LoadSpaceInvadersImages {RendererNativeInt=renderer} rootPath =
 
     let fromFile name = 
         let fullPath = Path.Combine(Path.Combine(rootPath, "Images"), name) + ".bmp"
         match LoadBMP fullPath with
-            | Some(file) -> file |> WithDimensions
-            | None       -> failwith (sprintf "Space invaders could not start because file '%s' is missing." fullPath)
+            | Some(file) -> 
+                match BMPImagePreparedForRenderer renderer file with
+                    | Some(loadedImage) ->
+                        loadedImage
+                    | None ->
+                        failwith (sprintf "Space invaders could not start because file '%s' could not be translated to an SDL texture." fullPath)
+            | None -> 
+                failwith (sprintf "Space invaders could not start because file '%s' is missing." fullPath)
     {
         Ship        = fromFile "Ship"
         RedInvader  = fromFile "RedInvader"
@@ -48,7 +54,7 @@ let LoadSpaceInvadersImages rootPath =
 /// Render game drawing command to the screen.
 /// Here we are choosing to use a 1:1 mapping from world coordinates onto
 /// a 256 x 256 pixel SDL surface.
-let RenderToSdlSurface imageSet fontDefinition targetSurface drawingCommand =
+let RenderToSdl imageSet fontDefinition renderer drawingCommand =
 
     /// Convert World Units <wu> to our pixels.  It happens that this is 1:1 with 256 x 256 schemes.
     let px (n:int<wu>) = int n
@@ -56,23 +62,23 @@ let RenderToSdlSurface imageSet fontDefinition targetSurface drawingCommand =
     match drawingCommand with
         
         | DrawBullet(left,top) ->
-            DrawImage targetSurface imageSet.Bullet (px left) (px top)
+            DrawImage renderer imageSet.Bullet (px left) (px top)
 
         | DrawBomb(left,top) ->
-            DrawImage targetSurface imageSet.Bomb (px left) (px top)
+            DrawImage renderer imageSet.Bomb (px left) (px top)
 
         | DrawInvader(left,top,dogTag) ->
             let invaderBmp =
                 match (InvaderColourFromDogTag dogTag) with
                     | RedInvader  -> imageSet.RedInvader
                     | BlueInvader -> imageSet.BlueInvader
-            DrawImage targetSurface invaderBmp (px left) (px top)
+            DrawImage renderer invaderBmp (px left) (px top)
 
         | DrawMothership(left,top) ->
-            DrawImage targetSurface imageSet.Mothership (px left) (px top)
+            DrawImage renderer imageSet.Mothership (px left) (px top)
 
         | DrawShip(left,top) ->
-            DrawImage targetSurface imageSet.Ship (px left) (px top)
+            DrawImage renderer imageSet.Ship (px left) (px top)
 
         | DrawExplosion(e) ->
             let w = imageSet.Explosion.SourceRect.w
@@ -82,28 +88,28 @@ let RenderToSdlSurface imageSet fontDefinition targetSurface drawingCommand =
             let dstw = (px e.ExplosionExtents.RightW) - dstx 
             let dsth = (px e.ExplosionExtents.BottomW) - dsty 
             DrawSubImage 
-                targetSurface
+                renderer
                 imageSet.Explosion.ImageHandle
                 0 0 w h
                 dstx dsty dstw dsth
 
         | DrawText(x,top,message,textAlign) ->
-            DrawTextString targetSurface (px x) (px top) message textAlign fontDefinition
+            DrawTextString renderer (px x) (px top) message textAlign fontDefinition
 
         | TitleBackground ->
-            DrawFilledRectangle targetSurface 0 0 256 256 0x000040u
+            DrawFilledRectangle renderer 0 0 256 256 0x000040u
 
         | GameplayBackground ->
-            DrawFilledRectangle targetSurface 0 0 256 256 0u
+            DrawFilledRectangle renderer 0 0 256 256 0u
 
         | GameOverBackground ->
-            DrawFilledRectangle targetSurface 0 0 256 256 0x400000u
+            DrawFilledRectangle renderer 0 0 256 256 0x400000u
     
         | NextLevelBackground ->
-            DrawFilledRectangle targetSurface 0 0 256 256 0x400040u
+            DrawFilledRectangle renderer 0 0 256 256 0x400040u
 
         | LifeOverBackground ->
-            DrawFilledRectangle targetSurface 0 0 256 256 0x004000u
+            DrawFilledRectangle renderer 0 0 256 256 0x004000u
 
 
 
@@ -121,7 +127,7 @@ let TimerCallback (interval:uint32) (param:nativeint) : uint32 =
     1u  // We can return 0u to cancel the timer here, or non-zero to keep it going.
 
 
-
+(*
 let SpikeSdlRendererMain () =
 
     let imageSet = LoadSpaceInvadersImages ""
@@ -154,29 +160,30 @@ let SpikeSdlRendererMain () =
     // TODO : This spike does not cleanly relese stuff
     
     0
-
+*)
             
 
 
 
 let GameMain () =
 
-    // TODO:  Minor: We don't actually free the imageSet surface handles.
+    // TODO:  Minor: We don't actually free the imageSet handles.
 
-    let imageSet = LoadSpaceInvadersImages ""
-    let fontDefinition = MakeFont imageSet.Font.ImageHandle
+    match CreateWindowAndRenderer 256 256 with   // TODO: constants
 
-    let mutable screenState = CompletelyNewGameStateWithResetHiScore ()
+        | Some(mainWindow, renderer) ->
 
-    let result = WithNewMainWindowDo "Space Invaders" 256 256 (fun mainWindow ->
-
-        mainWindow |> WithWindowSurfaceDo (fun mainSurface ->
-
-            let timerID = SDL.SDL_AddTimer(15u,new SDL.SDL_TimerCallback(TimerCallback),0n)
+            let imageSet = LoadSpaceInvadersImages renderer ""
+            let fontDefinition = MakeFont imageSet.Font.ImageHandle
+            let mutable screenState = CompletelyNewGameStateWithResetHiScore ()
+ 
+            let timerID = 
+                SDL.SDL_AddTimer(15u,new SDL.SDL_TimerCallback(TimerCallback),0n)
+            
             if timerID = 0 then
                 failwith "Failed to install the gameplay timer."
 
-            let renderFunction = (RenderToSdlSurface imageSet fontDefinition mainSurface)
+            let renderFunction = (RenderToSdl imageSet fontDefinition renderer)
 
             let mutable leftHeld = false
             let mutable rightHeld = false
@@ -224,26 +231,35 @@ let GameMain () =
                         let inputEventData = { LeftHeld=leftHeld ; RightHeld=rightHeld ; FireJustPressed=fireJustPressed }
                         let nextState = CalculateNextScreenState screenState inputEventData (TickCount(tickCount))
                         RenderScreen renderFunction nextState
-                        UpdateWindowSurface mainWindow
+                        Present renderer
                         fireJustPressed <- false
                         screenState <- nextState
-        ) 
-    )
-
-    match result with
-        | Error(message) ->
-            printfn "%s" message
             1
 
-        | Ok(_) ->
+        | None ->
             0
+            
+
+
+            (*let result = WithNewMainWindowDo "Space Invaders" 256 256 (fun mainWindow ->
+
+                mainWindow |> WithWindowSurfaceDo (fun mainSurface ->*)
+
+                (*
+            match result with
+                | Error(message) ->
+                    printfn "%s" message
+                    1
+
+                | Ok(_) ->
+                    0*)
 
 
 
 
 [<EntryPoint>]
 let main argv =
-    match WithSdl2Do SpikeSdlRendererMain (*GameMain*) with
+    match WithSdl2Do (*SpikeSdlRendererMain*) GameMain with
         | None -> 
             printfn "Failed to start SDL2 library."
             0
