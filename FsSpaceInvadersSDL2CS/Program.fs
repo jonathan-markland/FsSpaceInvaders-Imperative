@@ -122,8 +122,46 @@ let TimerCallback (interval:uint32) (param:nativeint) : uint32 =
 
 
 
+let SpikeSdlRendererMain () =
+
+    let imageSet = LoadSpaceInvadersImages ""
+    
+    let mutable windowNativeInt = 0n
+    let mutable rendererNativeInt = 0n
+    let createWRResult = SDL.SDL_CreateWindowAndRenderer(320,240,SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE,&windowNativeInt,&rendererNativeInt)
+    if createWRResult = 0 then
+
+        let mutable renInfo = new SDL.SDL_RendererInfo ()
+        SDL.SDL_GetRendererInfo(rendererNativeInt, &renInfo) |> ignore
+
+        // SDL.SDL_RendererFlags.SDL_RENDERER_TARGETTEXTURE
+        // SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED
+
+        let texture = SDL.SDL_CreateTextureFromSurface(rendererNativeInt,imageSet.BlueInvader.ImageHandle.BMPHandle)
+        if texture <> 0n then
+            let mutable stopping = false
+            while not stopping do
+                let mutable event = new SDL.SDL_Event()
+                SDL.SDL_PollEvent(&event) |> ignore
+                if (event.``type`` = SDL.SDL_EventType.SDL_QUIT) then
+                    stopping <- true
+                else
+                    SDL.SDL_SetRenderDrawColor(rendererNativeInt,0uy,0uy,0uy,0uy) |> ignore
+                    SDL.SDL_RenderClear(rendererNativeInt) |> ignore
+                    SDL.SDL_RenderCopy(rendererNativeInt, texture, 0n, 0n) |> ignore
+                    SDL.SDL_RenderPresent(rendererNativeInt)
+
+    // TODO : This spike does not cleanly relese stuff
+    
+    0
+
+            
+
+
 
 let GameMain () =
+
+    // TODO:  Minor: We don't actually free the imageSet surface handles.
 
     let imageSet = LoadSpaceInvadersImages ""
     let fontDefinition = MakeFont imageSet.Font.ImageHandle
@@ -205,7 +243,7 @@ let GameMain () =
 
 [<EntryPoint>]
 let main argv =
-    match WithSdl2Do GameMain with
+    match WithSdl2Do SpikeSdlRendererMain (*GameMain*) with
         | None -> 
             printfn "Failed to start SDL2 library."
             0
