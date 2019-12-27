@@ -68,21 +68,30 @@ type RendererNativeInt =
 
 let CreateWindowAndRenderer width height =
 
-    let mutable windowNativeInt = 0n
-    let mutable rendererNativeInt = 0n
+    let windowFlags =
+        SDL.SDL_WindowFlags.SDL_WINDOW_SHOWN + 
+        SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE
 
-    let createWRResult =
-        SDL.SDL_CreateWindowAndRenderer(
-            width,
-            height,
-            SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE,
-            &windowNativeInt,
-            &rendererNativeInt)
+    let windowNativeInt =
+        SDL.SDL_CreateWindow("GAME", 100, 100, width, height, windowFlags)
 
-    if createWRResult = 0 then
-        Some({ WindowNativeInt=windowNativeInt } , { RendererNativeInt=rendererNativeInt })
+    if windowNativeInt <> 0n then
+
+        let renderFlags =
+            SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED
+
+        let rendererNativeInt =
+            SDL.SDL_CreateRenderer(windowNativeInt, -1, renderFlags)
+
+        if rendererNativeInt <> 0n then
+            Some({ WindowNativeInt=windowNativeInt } , { RendererNativeInt=rendererNativeInt })
+        else
+            SDL.SDL_DestroyWindow(windowNativeInt)
+            None
+
     else
         None
+
 
 
 
