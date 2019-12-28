@@ -66,14 +66,14 @@ type RendererNativeInt =
 
 
 
-let CreateWindowAndRenderer width height =
+let CreateWindowAndRenderer width height =   // TODO: Should we drop back to WithNewMainWindowDo, and separate the creation of the renderer out?
 
     let windowFlags =
         SDL.SDL_WindowFlags.SDL_WINDOW_SHOWN + 
         SDL.SDL_WindowFlags.SDL_WINDOW_RESIZABLE
 
     let windowNativeInt =
-        SDL.SDL_CreateWindow("GAME", 100, 100, width, height, windowFlags)
+        SDL.SDL_CreateWindow("GAME", 100, 32, width, height, windowFlags)  // TODO: Calculate central position on the screen?
 
     if windowNativeInt <> 0n then
 
@@ -142,7 +142,7 @@ let BMPImagePreparedForRenderer rendererNativeInt { BMPNativeInt = bmp } =
 type FontDefinition =
     {
         FontImageHandle:  BMPNativeInt
-        TextureNativeInt: TextureNativeInt
+        FontTextureNativeInt: TextureNativeInt
         CharWidth:        int
         CharHeight:       int
     }
@@ -153,8 +153,8 @@ let MakeFontFromBMP { RendererNativeInt=renderer } { BMPNativeInt=bmp } =
     let texture = SDL.SDL_CreateTextureFromSurface(renderer,bmp)
     if texture <> 0n then
         Some({
-            FontImageHandle   = { BMPNativeInt=bmp }
-            TextureNativeInt  = { TextureNativeInt=texture }
+            FontImageHandle      = { BMPNativeInt=bmp }
+            FontTextureNativeInt = { TextureNativeInt=texture }
             CharWidth  = 6  // TODO
             CharHeight = 8  // TODO
         })
@@ -233,7 +233,7 @@ let DrawTextString renderer x top message textAlign (fontDefinition:FontDefiniti
 
     let chWidth  = fontDefinition.CharWidth
     let chHeight = fontDefinition.CharHeight
-    let texture  = fontDefinition.TextureNativeInt
+    let texture  = fontDefinition.FontTextureNativeInt
 
     let measuredWidth (s:string) =
         s.Length * chWidth
@@ -266,6 +266,17 @@ let WithSdl2Do f =
         | :? System.BadImageFormatException ->
             None
 
+
+let SetRenderTargetToScreen { RendererNativeInt=renderer } =
+    SDL.SDL_SetRenderTarget(renderer, 0n) |> ignore
+
+
+let SetRenderTargetToTexture { RendererNativeInt=renderer } { TextureNativeInt=texture } =
+    SDL.SDL_SetRenderTarget(renderer, texture) |> ignore
+
+
+let RenderCopyToFullTarget { RendererNativeInt=renderer } { TextureNativeInt=texture } =
+    SDL.SDL_RenderCopy(renderer, texture, 0n, 0n) |> ignore
 
 
 let Present {RendererNativeInt=renderer} =

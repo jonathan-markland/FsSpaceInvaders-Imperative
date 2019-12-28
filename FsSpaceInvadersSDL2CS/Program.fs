@@ -124,7 +124,7 @@ let TimerCallback (interval:uint32) (param:nativeint) : uint32 =
     event.user.data2 <- 0n
 
     SDL.SDL_PushEvent(&event) |> ignore
-    1u  // We can return 0u to cancel the timer here, or non-zero to keep it going.
+    interval  // We can return 0u to cancel the timer here, or interval to keep it going.
 
 
 (*
@@ -169,9 +169,10 @@ let GameMain () =
 
     // TODO:  Minor: We don't actually free the imageSet handles.
 
-    match CreateWindowAndRenderer 256 256 with   // TODO: constants
+    match CreateWindowAndRenderer 800 800 with   // TODO: constants
         | Some(mainWindow, renderer) ->
 
+            // TODO: Move into library:
             let backingTexture = { TextureNativeInt = SDL.SDL_CreateTexture(renderer.RendererNativeInt, SDL.SDL_PIXELFORMAT_RGBA8888, int SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, 256, 256) }
             if backingTexture.TextureNativeInt = 0n then
                 failwith "" // TODO: sort out
@@ -185,7 +186,7 @@ let GameMain () =
                     let mutable screenState = CompletelyNewGameStateWithResetHiScore ()
  
                     let timerID = 
-                        SDL.SDL_AddTimer(15u,new SDL.SDL_TimerCallback(TimerCallback),0n)
+                        SDL.SDL_AddTimer(20u,new SDL.SDL_TimerCallback(TimerCallback),0n)
             
                     if timerID = 0 then
                         failwith "Failed to install the gameplay timer."
@@ -237,10 +238,10 @@ let GameMain () =
                                 tickCount <- tickCount + 1u
                                 let inputEventData = { LeftHeld=leftHeld ; RightHeld=rightHeld ; FireJustPressed=fireJustPressed }
                                 let nextState = CalculateNextScreenState screenState inputEventData (TickCount(tickCount))
-                                SDL.SDL_SetRenderTarget(renderer.RendererNativeInt, backingTexture.TextureNativeInt) |> ignore
+                                SetRenderTargetToTexture renderer backingTexture
                                 RenderScreen renderFunction nextState
-                                SDL.SDL_SetRenderTarget(renderer.RendererNativeInt, 0n) |> ignore
-                                SDL.SDL_RenderCopy(renderer.RendererNativeInt, backingTexture.TextureNativeInt, 0n, 0n) |> ignore
+                                SetRenderTargetToScreen renderer
+                                RenderCopyToFullTarget renderer backingTexture
                                 Present renderer
                                 fireJustPressed <- false
                                 screenState <- nextState
@@ -267,9 +268,105 @@ let GameMain () =
 
 
 
+let RendererPerformanceSpikeMain () =
+
+    match CreateWindowAndRenderer 1920 1080 with   // TODO: constants
+        | Some(mainWindow, renderer) ->
+
+            let backingTexture = { TextureNativeInt = SDL.SDL_CreateTexture(renderer.RendererNativeInt, SDL.SDL_PIXELFORMAT_RGBA8888, int SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, 256, 256) }
+            if backingTexture.TextureNativeInt = 0n then
+                failwith "" // TODO: sort out
+
+            let imageSet = LoadSpaceInvadersImages renderer ""
+
+            match MakeFontFromBMP renderer imageSet.Font.ImageHandle with
+                | None -> 
+                    0
+                | Some(fontDefinition) ->
+
+                    let total = 1000u
+                    let mutable counter = 0u
+                    let timeAtStart = System.DateTime.Now
+
+                    while counter < total do
+                        // Garbage test:
+                        // [1n..5000n] |> List.map (fun item -> item.ToString()) |> ignore
+                        SetRenderTargetToTexture renderer backingTexture
+                        let c = (0xFF000000u + (counter &&& 0xFFu))
+                        DrawFilledRectangle renderer 0 0 256 256 c
+                        SetRenderTargetToScreen renderer
+                        RenderCopyToFullTarget renderer backingTexture
+                        Present renderer
+                        counter <- (counter + 1u)
+                        
+                    let timeAtEnd = System.DateTime.Now
+                    let elapsed = timeAtEnd.Subtract(timeAtStart)
+                    printfn "Elapsed: %g milliseconds per frame" (elapsed.TotalMilliseconds / float total)
+
+                    1
+
+        | None ->
+            0
+
+
+
+
+let RendererWithTimerSpikeMain () =
+
+    match CreateWindowAndRenderer 1920 1080 with   // TODO: constants
+        | Some(mainWindow, renderer) ->
+
+            let backingTexture = { TextureNativeInt = SDL.SDL_CreateTexture(renderer.RendererNativeInt, SDL.SDL_PIXELFORMAT_RGBA8888, int SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_TARGET, 256, 256) }
+            if backingTexture.TextureNativeInt = 0n then
+                failwith "" // TODO: sort out
+
+            let timerID = 
+                SDL.SDL_AddTimer(100u,new SDL.SDL_TimerCallback(TimerCallback),0n)
+            
+            if timerID = 0 then
+                failwith "Failed to install the gameplay timer."
+
+            let imageSet = LoadSpaceInvadersImages renderer ""
+
+            match MakeFontFromBMP renderer imageSet.Font.ImageHandle with
+                | None -> 
+                    0
+                | Some(fontDefinition) ->
+
+                    let mutable counter = 0u
+
+                    let mutable quit = false
+                    while quit = false do
+
+                        let mutable event = new SDL.SDL_Event ()
+
+                        while (SDL.SDL_WaitEvent (&event)) <> 0 && not quit do   // SDL_PollEvent
+
+                            let msg = event.``type``
+
+                            if msg = SDL.SDL_EventType.SDL_QUIT then 
+                                quit <- true
+
+                            else if msg = SDL.SDL_EventType.SDL_USEREVENT then
+                                SetRenderTargetToTexture renderer backingTexture
+                                let c = (0xFF000000u + (counter &&& 0xFFu))
+                                DrawFilledRectangle renderer 0 0 256 256 c
+                                SetRenderTargetToScreen renderer
+                                RenderCopyToFullTarget renderer backingTexture
+                                Present renderer
+                                counter <- (counter + 1u)
+
+                    1
+
+        | None ->
+            0
+
+
+
+
 [<EntryPoint>]
 let main argv =
-    match WithSdl2Do (*SpikeSdlRendererMain*) GameMain with
+    match WithSdl2Do GameMain with //GameMain with
         | None -> 
             printfn "Failed to start SDL2 library."   // TODO: Let's not use the STDOUT.
             0
