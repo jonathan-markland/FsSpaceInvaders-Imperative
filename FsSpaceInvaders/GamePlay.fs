@@ -189,10 +189,10 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
     let MoveShip () =
 
         if input.LeftHeld && (HorizontalCentreOf world.Ship.ShipExtents) > ShipCentreLeftmostX then
-            world.Ship.ShipExtents <- world.Ship.ShipExtents |> RectangleShuntedBy -1<wu> 0<wu>
+            world.Ship.ShipExtents <- world.Ship.ShipExtents |> RectangleShuntedBy -ShipMovementStep 0<wu>
 
         if input.RightHeld && (HorizontalCentreOf world.Ship.ShipExtents) < ShipCentreRightmostX then
-            world.Ship.ShipExtents <- world.Ship.ShipExtents |> RectangleShuntedBy 1<wu> 0<wu>
+            world.Ship.ShipExtents <- world.Ship.ShipExtents |> RectangleShuntedBy ShipMovementStep 0<wu>
 
     let ConsiderBulletFiring () =
 
@@ -228,10 +228,10 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
                     ()
         )
 
-    let UpdateBullets () =
+    let MoveBullets () =
 
         let ApplyUpwardMovementToBullet b =
-            b.BulletExtents <- b.BulletExtents |> RectangleShuntedBy 0<wu> -1<wu>
+            b.BulletExtents <- b.BulletExtents |> RectangleShuntedBy 0<wu> -BulletStep
 
         let WhereBulletStillBelowTopmostPosition bullet =
             bullet.BulletExtents.TopW > BulletEndY
@@ -243,23 +243,20 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
         world.Bullets <- bulletsStillInPlay
 
-    let UpdateBombs () =
+    let MoveBombs () =
 
-        DoEvery TimeForBombUpdateCheck elapsedTime (fun () ->
+        let ApplyDownwardMovementToBomb b =
+            b.BombExtents <- b.BombExtents |> RectangleShuntedBy 0<wu> BombStep
 
-            let ApplyDownwardMovementToBomb b =
-                b.BombExtents <- b.BombExtents |> RectangleShuntedBy 0<wu> 1<wu>
+        let WhereBombStillAboveFloorPosition bomb =
+            bomb.BombExtents.BottomW < BombFloorY
 
-            let WhereBombStillAboveFloorPosition bomb =
-                bomb.BombExtents.BottomW < BombFloorY
+        let bombsStillInPlay = 
+            world.Bombs |> List.filter WhereBombStillAboveFloorPosition   // TODO: optimise for case where all are on screen still
 
-            let bombsStillInPlay = 
-                world.Bombs |> List.filter WhereBombStillAboveFloorPosition   // TODO: optimise for case where all are on screen still
+        bombsStillInPlay |> List.iter ApplyDownwardMovementToBomb
 
-            bombsStillInPlay |> List.iter ApplyDownwardMovementToBomb
-
-            world.Bombs <- bombsStillInPlay
-        )
+        world.Bombs <- bombsStillInPlay
 
     let WithAdditionalExplosionsFor listOfThings areaOfThing preExistingExplosions =
 
@@ -327,7 +324,7 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
         let (TickCount(ticks)) = timeNow   // TODO: Measure from the start of the screen?
         if ticks &&& 7u = 0u then
 
-            let ticks = ticks / 8u
+            //let ticks = ticks / 8u
             let dx = if (ticks &&& 16u)  = 0u then 1<wu> else -1<wu>   // TODO:  Use % with tunable constants
             let dy = if (ticks &&& 255u) = 0u then 8<wu> else 0<wu>    // TODO:  Use % with tunable constants
 
@@ -354,25 +351,20 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
     let MoveMotherships () =
 
-        let elapsedTime = timeNow --- world.GameStartTime
+        let dx = MothershipStep
 
-        DoEvery TimeForMothershipUpdate elapsedTime (fun () ->
+        world.Motherships |> List.iter (fun mothership ->
+            let old = mothership.MothershipExtents
+            mothership.MothershipExtents <- { old with LeftW = old.LeftW + dx ; RightW = old.RightW + dx }
+            )
 
-            let dx = 1<wu>
+        let atFinishPosition mothership =
+            mothership.MothershipExtents.RightW = (MothershipCentreEndX + MothershipWidth / 2)
 
-            world.Motherships |> List.iter (fun mothership ->
-                let old = mothership.MothershipExtents
-                mothership.MothershipExtents <- { old with LeftW = old.LeftW + dx ; RightW = old.RightW + dx }
-                )
-
-            let atFinishPosition mothership =
-                mothership.MothershipExtents.RightW = (MothershipCentreEndX + MothershipWidth / 2)
-
-            if world.Motherships |> List.exists atFinishPosition then
-                let survivingMotherships =
-                    world.Motherships |> List.filter (fun mothership -> not (mothership |> atFinishPosition))
-                world.Motherships <- survivingMotherships
-        )
+        if world.Motherships |> List.exists atFinishPosition then
+            let survivingMotherships =
+                world.Motherships |> List.filter (fun mothership -> not (mothership |> atFinishPosition))
+            world.Motherships <- survivingMotherships
 
     let NoInvadersLeft () =
     
@@ -419,8 +411,8 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
             MoveShip ()
             ConsiderBulletFiring ()
             ConsiderDroppingBombs ()
-            UpdateBullets ()
-            UpdateBombs ()
+            MoveBullets ()
+            MoveBombs ()
             ConsiderShotInvaders ()
             ConsiderShotMothership ()
             MoveInvaders ()
@@ -445,8 +437,8 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
             if elapsedInEndState < TimeForEndState then
 
-                UpdateBullets ()
-                UpdateBombs ()
+                MoveBullets ()
+                MoveBombs ()
                 ConsiderShotInvaders ()
                 ConsiderShotMothership ()
                 MoveInvaders ()
