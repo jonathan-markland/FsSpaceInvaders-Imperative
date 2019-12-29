@@ -62,16 +62,16 @@ let ShipInLevelStartPosition () =
 
 
 /// Create a fresh game world for a new game.
-let NewGameWorld score hiScore lives level (timeNow:TickCount) : GameWorld =
+let NewGameWorld hiScore (timeNow:TickCount) : GameWorld =
 
     {
         GameStartTime = timeNow
 
         PlayStats =
             {
-                Level   = level
-                ScoreAndHiScore = { Score=score ; HiScore=hiScore }
-                Lives   = lives
+                Level   = 1u
+                ScoreAndHiScore = { Score=0u ; HiScore=hiScore }
+                Lives   = 3u
             }
 
         Motherships  = []
@@ -130,7 +130,7 @@ type FrameResult = GameContinuing | PlayerWon | PlayerLost
 
 
 
-let BulletPositionOnTopOfShip theShip =  // TODO: Amalgamate with routine below.
+let BulletPositionOnTopOfShip theShip =
 
     let shipL = theShip.ShipExtents.LeftW
     let shipT = theShip.ShipExtents.TopW
@@ -142,18 +142,17 @@ let BulletPositionOnTopOfShip theShip =  // TODO: Amalgamate with routine below.
 
 
 
-let NewBulletFiredFromCentrallyAbove someRectangle =
+let NewBulletFiredFromCentrallyAbove theShip =
 
-    let leftSide = (HorizontalCentreOf someRectangle) - (BulletWidth / 2)
-    let baseY    = someRectangle.TopW
+    let x,y = BulletPositionOnTopOfShip theShip
 
     {
         BulletExtents =
             {
-                LeftW    = leftSide
-                RightW   = leftSide + BulletWidth
-                TopW     = baseY - BulletHeight
-                BottomW  = baseY
+                LeftW    = x
+                RightW   = x + BulletWidth
+                TopW     = y
+                BottomW  = y + BulletHeight
             }
     }
 
@@ -219,7 +218,7 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
         let CheckFireButton () =
 
             if input.FireJustPressed && world.Ship.WeaponReloadStartTimeOpt |> Option.isNone then
-                let newBullet = NewBulletFiredFromCentrallyAbove world.Ship.ShipExtents
+                let newBullet = NewBulletFiredFromCentrallyAbove world.Ship
                 let updatedBulletList = newBullet :: world.Bullets
                 world.Bullets <- updatedBulletList
                 world.Ship.WeaponReloadStartTimeOpt <- Some(timeNow)
@@ -334,22 +333,20 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
     let MoveInvaders () =
     
         let (TickCount(ticks)) = timeNow   // TODO: Measure from the start of the screen?
-        if ticks &&& 7u = 0u then
 
-            //let ticks = ticks / 8u
-            let dx = if (ticks &&& 16u)  = 0u then 1<wu> else -1<wu>   // TODO:  Use % with tunable constants
-            let dy = if (ticks &&& 255u) = 0u then 8<wu> else 0<wu>    // TODO:  Use % with tunable constants
+        let dx = if (ticks &&& 16u)  = 0u then 1<wu> else -1<wu>   // TODO:  Use % with tunable constants
+        let dy = if (ticks &&& 255u) = 0u then 8<wu> else 0<wu>    // TODO:  Use % with tunable constants
 
-            world.Invaders |> List.iter (fun invader ->
-                let old = invader.InvaderExtents
-                invader.InvaderExtents <-
-                    {
-                        LeftW     = old.LeftW   + dx
-                        TopW      = old.TopW    + dy
-                        RightW    = old.RightW  + dx
-                        BottomW   = old.BottomW + dy
-                    }
-                )
+        world.Invaders |> List.iter (fun invader ->
+            let old = invader.InvaderExtents
+            invader.InvaderExtents <-
+                {
+                    LeftW     = old.LeftW   + dx
+                    TopW      = old.TopW    + dy
+                    RightW    = old.RightW  + dx
+                    BottomW   = old.BottomW + dy
+                }
+            )
 
     let ConsiderIntroducingMothership () =
 

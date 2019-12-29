@@ -13,7 +13,7 @@ let CalculateNextScreenState (currentState:Screen) (input:InputEventData) (timeN
         
         | WelcomeScreen(lastHiScore) ->
             if input.FireJustPressed then
-                GamePlayScreen (NewGameWorld 0u lastHiScore 3u 1u timeNow)
+                GamePlayScreen (NewGameWorld lastHiScore timeNow)
             else
                 currentState
 
