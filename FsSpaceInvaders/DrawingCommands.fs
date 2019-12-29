@@ -16,7 +16,7 @@ type DrawingCommand =
     | DrawMothership of l4:int<wu> * t4:int<wu>
     | DrawBomb       of l6:int<wu> * t6:int<wu>
     | DrawExplosion  of explosion:Explosion
-    | DrawText       of x:int<wu> * topY5:int<wu> * message:string * textAlign:TextAlignment
+    | DrawText       of x:int<wu> * topY5:int<wu> * message:string * textHAlign:TextHAlignment * textVAlign:TextVAlignment
     | TitleBackground
     | GameplayBackground
     | GameOverBackground

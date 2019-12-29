@@ -58,28 +58,23 @@ let RenderGameWorld render (gameWorld:GameWorld) =
         (fun explosion ->
             render (DrawExplosion(explosion)))
 
-    let text x top message alignment =
-        render (DrawText (x, top, message, alignment))
+    let text x top message alignmentH alignmentV =
+        render (DrawText (x, top, message, alignmentH, alignmentV))
 
-    let number x top (value:uint32) alignment =
+    let number x top (value:uint32) alignmentH alignmentV =
         let s = value.ToString()
-        render (DrawText (x, top, s, alignment))
+        render (DrawText (x, top, s, alignmentH, alignmentV))
 
-    let HeadingAlignmentScore   = LeftAlign
-    let HeadingAlignmentHiScore = CentreAlign
-    let HeadingAlignmentLevel   = CentreAlign
-    let HeadingAlignmentLives   = RightAlign
-
-    text   HeadingScoreX   ScoreboardTitlesTopY "SCORE"   HeadingAlignmentScore  
-    text   HeadingHiScoreX ScoreboardTitlesTopY "HISCORE" HeadingAlignmentHiScore
-    text   HeadingLevelX   ScoreboardTitlesTopY "LEVEL"   HeadingAlignmentLevel  
-    text   HeadingLivesX   ScoreboardTitlesTopY "LIVES"   HeadingAlignmentLives  
+    text   HeadingScoreX   ScoreboardTitlesTopY "SCORE"   LeftAlign   TopAlign
+    text   HeadingHiScoreX ScoreboardTitlesTopY "HISCORE" CentreAlign TopAlign
+    text   HeadingLevelX   ScoreboardTitlesTopY "LEVEL"   CentreAlign TopAlign
+    text   HeadingLivesX   ScoreboardTitlesTopY "LIVES"   RightAlign  TopAlign
 
     let { Score=score ; HiScore=hiScore } = gameWorld.PlayStats.ScoreAndHiScore
 
-    number HeadingScoreX   ScoreboardValuesTopY score   HeadingAlignmentScore  
-    number HeadingHiScoreX ScoreboardValuesTopY hiScore HeadingAlignmentHiScore
-    number HeadingLevelX   ScoreboardValuesTopY gameWorld.PlayStats.Level   HeadingAlignmentLevel  
-    number HeadingLivesX   ScoreboardValuesTopY gameWorld.PlayStats.Lives   HeadingAlignmentLives  
+    number HeadingScoreX   ScoreboardValuesTopY score   LeftAlign   TopAlign 
+    number HeadingHiScoreX ScoreboardValuesTopY hiScore CentreAlign TopAlign
+    number HeadingLevelX   ScoreboardValuesTopY gameWorld.PlayStats.Level   CentreAlign TopAlign
+    number HeadingLivesX   ScoreboardValuesTopY gameWorld.PlayStats.Lives   RightAlign TopAlign
 
 

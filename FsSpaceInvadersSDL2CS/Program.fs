@@ -93,8 +93,8 @@ let RenderToSdl imageSet fontDefinition renderer drawingCommand =
                 0 0 w h
                 dstx dsty dstw dsth
 
-        | DrawText(x,top,message,textAlign) ->
-            DrawTextString renderer (px x) (px top) message textAlign fontDefinition
+        | DrawText(x,top,message,textHAlign,textVAlign) ->
+            DrawTextString renderer (px x) (px top) message textHAlign textVAlign fontDefinition
 
         | TitleBackground ->
             DrawFilledRectangle renderer 0 0 256 256 0x000040u

@@ -8,15 +8,15 @@ open GamePlayTypes
 
 
 
-let private text x top message alignment =
-    DrawText (x, top, message, alignment)    // TODO: Text not vertically centred in the screen.
+let private text x top message alignmentH alignmentV =
+    DrawText (x, top, message, alignmentH, alignmentV)    // TODO: Text not vertically centred in the screen.
 
 
 
 let RenderWelcomeScreen render =
     render (TitleBackground)
-    render (text (ScreenWidth / 2) (ScreenHeight / 2)       "SPACE INVADERS"     CentreAlign)
-    render (text (ScreenWidth / 2) ((ScreenHeight * 6) / 7) "PRESS FIRE TO PLAY" CentreAlign)
+    render (text (ScreenWidth / 2) (ScreenHeight / 2)       "SPACE INVADERS"     CentreAlign MiddleAlign)
+    render (text (ScreenWidth / 2) ((ScreenHeight * 6) / 7) "PRESS FIRE TO PLAY" CentreAlign MiddleAlign)
 
 
 
@@ -27,19 +27,19 @@ let RenderGamePlayScreen render gameWorld =
 
 let RenderNextLevelScreen render =
     render (NextLevelBackground)
-    render (text (ScreenWidth / 2) (ScreenHeight / 2) "NEXT LEVEL   WELL DONE" CentreAlign)
+    render (text (ScreenWidth / 2) (ScreenHeight / 2) "NEXT LEVEL   WELL DONE" CentreAlign MiddleAlign)
     
 
 
 let RenderLifeOverScreen render =
     render (LifeOverBackground)
-    render (text (ScreenWidth / 2) (ScreenHeight / 2) "SHIP DESTROYED" CentreAlign)
+    render (text (ScreenWidth / 2) (ScreenHeight / 2) "SHIP DESTROYED" CentreAlign MiddleAlign)
 
 
 
 let RenderGameOverScreen render =
     render (GameOverBackground)
-    render (text (ScreenWidth / 2) (ScreenHeight / 2) "GAME OVER" CentreAlign)
+    render (text (ScreenWidth / 2) (ScreenHeight / 2) "GAME OVER" CentreAlign MiddleAlign)
 
 
 

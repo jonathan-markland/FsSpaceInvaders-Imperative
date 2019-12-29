@@ -229,7 +229,7 @@ let DrawFilledRectangle {RendererNativeInt=renderer} left top right bottom (colo
     SDL.SDL_RenderFillRect(renderer, &rect) |> ignore
 
 /// Draw text at given position in given font, with given alignment.
-let DrawTextString renderer x top message textAlign (fontDefinition:FontDefinition) =
+let DrawTextString renderer x y message textHAlign textVAlign (fontDefinition:FontDefinition) =
 
     let chWidth  = fontDefinition.CharWidth
     let chHeight = fontDefinition.CharHeight
@@ -239,13 +239,19 @@ let DrawTextString renderer x top message textAlign (fontDefinition:FontDefiniti
         s.Length * chWidth
 
     let mutable posx =
-        match textAlign with
+        match textHAlign with
             | LeftAlign   -> x
             | CentreAlign -> x - (message |> measuredWidth) / 2
             | RightAlign  -> x - (message |> measuredWidth)
 
+    let posy =
+        match textVAlign with
+            | TopAlign    -> y
+            | MiddleAlign -> y - (chHeight / 2)
+            | BottomAlign -> y - chHeight
+
     message |> Seq.iter (fun ch -> 
-        let write charIndex = DrawSubImage renderer texture  (charIndex * chWidth) 0 chWidth chHeight  posx top chWidth chHeight
+        let write charIndex = DrawSubImage renderer texture  (charIndex * chWidth) 0 chWidth chHeight  posx posy chWidth chHeight
         if      ch >= '0' && ch <= '9' then write ((int ch) - 48)
         else if ch >= 'A' && ch <= 'Z' then write ((int ch) - 55)
         else if ch >= 'a' && ch <= 'z' then write ((int ch) - 87)

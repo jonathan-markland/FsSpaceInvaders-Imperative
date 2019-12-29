@@ -1,4 +1,4 @@
 ﻿module Fonts
 
-type TextAlignment = LeftAlign | CentreAlign | RightAlign
-
+type TextHAlignment = LeftAlign | CentreAlign | RightAlign
+type TextVAlignment = TopAlign  | MiddleAlign | BottomAlign
