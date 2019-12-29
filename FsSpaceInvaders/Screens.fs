@@ -20,10 +20,10 @@ let CalculateNextScreenState (currentState:Screen) (input:InputEventData) (timeN
         | GamePlayScreen(world) ->
             match CalculateNextFrameState world input timeNow with
                 | GameContinuing -> currentState
-                | PlayerWon      -> NextLevelScreen(world |> NextLevelGameWorld)
+                | PlayerWon      -> NextLevelScreen(world |> NextLevelGameWorld timeNow)
                 | PlayerLost     -> 
                     if world.PlayStats.Lives > 0u then
-                        LifeOverScreen(world |> NextLifeGameWorld)
+                        LifeOverScreen(world |> NextLifeGameWorld timeNow)
                     else
                         GameOverScreen(world.PlayStats.ScoreAndHiScore.HiScore)
 

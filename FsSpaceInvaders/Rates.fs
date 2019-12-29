@@ -7,4 +7,5 @@ let TimeForNewBombCheck      = TickSpan(40u)  // TODO: Should this be run-time c
 let TimeForReloadShipWeapon  = TickSpan(15u)
 let TimeForWholeExplosion    = TickSpan(15u)
 let TimeForEndState          = TickSpan(250u)
-
+let TimeForInvaderWiggle     = 16u
+let TimeForInvaderAdvance    = 128u

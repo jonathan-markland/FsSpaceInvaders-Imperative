@@ -87,12 +87,12 @@ let NewGameWorld hiScore (timeNow:TickCount) : GameWorld =
 
 /// Given a world where the player has just lost a life,
 /// return a new world for the next life.
-let NextLifeGameWorld (outgoing:GameWorld) : GameWorld =
+let NextLifeGameWorld (timeNow:TickCount) (outgoing:GameWorld) : GameWorld =
 
     let oldStats = outgoing.PlayStats
 
     {
-        GameStartTime = outgoing.GameStartTime
+        GameStartTime = timeNow
         PlayStats     = { oldStats with Lives = oldStats.Lives - 1u }
         Motherships   = outgoing.Motherships
         Invaders      = outgoing.Invaders
@@ -107,13 +107,13 @@ let NextLifeGameWorld (outgoing:GameWorld) : GameWorld =
 
 /// Given a world where the player has just won the level,
 /// return a new world for the next level.
-let NextLevelGameWorld (outgoing:GameWorld) : GameWorld =
+let NextLevelGameWorld (timeNow:TickCount) (outgoing:GameWorld) : GameWorld =
 
     let oldStats   = outgoing.PlayStats
     let newScoring = oldStats.ScoreAndHiScore |> IncrementScoreBy ScoreForNextLevel
 
     {
-        GameStartTime = outgoing.GameStartTime
+        GameStartTime = timeNow
         PlayStats     = { oldStats with Lives = oldStats.Lives + 1u ; Level = oldStats.Level + 1u ; ScoreAndHiScore = newScoring }
         Motherships   = []
         Invaders      = NewInvaderPack ()
@@ -332,10 +332,11 @@ let CalculateNextFrameState (world:GameWorld) (input:InputEventData) (timeNow:Ti
 
     let MoveInvaders () =
     
-        let (TickCount(ticks)) = timeNow   // TODO: Measure from the start of the screen?
+        let elapsedTime = timeNow --- world.GameStartTime
+        let (TickSpan(ticks)) = elapsedTime
 
-        let dx = if (ticks &&& 16u)  = 0u then 1<wu> else -1<wu>   // TODO:  Use % with tunable constants
-        let dy = if (ticks &&& 255u) = 0u then 8<wu> else 0<wu>    // TODO:  Use % with tunable constants
+        let dx = if (ticks % (TimeForInvaderWiggle * 2u)) >= TimeForInvaderWiggle then InvaderWiggleStep  else -InvaderWiggleStep
+        let dy = if (ticks % TimeForInvaderAdvance) = 0u then InvaderAdvanceStep else 0<wu>
 
         world.Invaders |> List.iter (fun invader ->
             let old = invader.InvaderExtents

@@ -17,6 +17,8 @@ let MothershipStep       = 2<wu>
 let InvaderWidth         = 16<wu>
 let InvaderHeight        = 8<wu>
 let InvaderVSpacing      = 4<wu>
+let InvaderWiggleStep    = 1<wu>
+let InvaderAdvanceStep   = 8<wu>
 
 let BulletWidth          = 4<wu>
 let BulletHeight         = 8<wu>
