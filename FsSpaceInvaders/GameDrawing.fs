@@ -1,24 +1,15 @@
 ﻿module GameDrawing
 
+open GamePlay
 open GamePlayTypes
 open ScreenLayout
-open Dimensions
 open DrawingCommands
 open Fonts
 open ScoreHiScore
 
+
+
 let RenderGameWorld render (gameWorld:GameWorld) =
-
-    let BulletPositionOnTopOfShip theShip =
-
-        let shipL = theShip.ShipExtents.LeftW
-        let shipT = theShip.ShipExtents.TopW
-
-        let bleft = shipL + ((ShipWidth - BulletWidth)/2)
-        let btop  = shipT - BulletHeight
-
-        (bleft,btop)
-
 
     render (GameplayBackground)
 

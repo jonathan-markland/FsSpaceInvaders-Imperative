@@ -130,6 +130,18 @@ type FrameResult = GameContinuing | PlayerWon | PlayerLost
 
 
 
+let BulletPositionOnTopOfShip theShip =  // TODO: Amalgamate with routine below.
+
+    let shipL = theShip.ShipExtents.LeftW
+    let shipT = theShip.ShipExtents.TopW
+
+    let bleft = shipL + ((ShipWidth - BulletWidth)/2)
+    let btop  = shipT - BulletHeight
+
+    (bleft,btop)
+
+
+
 let NewBulletFiredFromCentrallyAbove someRectangle =
 
     let leftSide = (HorizontalCentreOf someRectangle) - (BulletWidth / 2)
